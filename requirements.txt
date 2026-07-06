@@ -1,0 +1,7 @@
+numpy
+scipy
+biopython
+numba
+pyyaml
+matplotlib
+# GPU (opcjonalnie): cupy-cuda12x

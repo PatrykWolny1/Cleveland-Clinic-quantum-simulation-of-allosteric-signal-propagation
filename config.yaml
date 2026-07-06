@@ -1,0 +1,47 @@
+# ============================================================
+# Iteration: I change the values here (run.py) or the grid in experiments.py.
+# ============================================================
+paths:
+  pdb_clean: pdb_clean
+  pdb_raw: pdb_raw          # for auto-detection of the active site (cofactor)
+  outputs: outputs
+
+backend:
+  use_gpu: false            # true -> always CuPy (eig on GPU)
+  auto_gpu: false           # GPU is slower for N<~2000 (see bench.py); on for large systems
+  n_gpu_min: 700            # N threshold above which the GPU pays off
+  n_workers: 3              # MP over targets (when there is no GPU)
+
+data:
+  chain_select: largest     # all | largest | <chain ID>
+  active_cutoff: 6.0        # A from the cofactor -> active site
+  # cofactor_codes: [GDP, GNP, ADP, ATP]   # null => default list of nucleotides
+
+graph:
+  variant: cutoff           # cutoff | knn
+  params: {cutoff: 8.0}
+
+hamiltonian:
+  variant: laplacian        # laplacian | adjacency | tight_binding
+  params: {}
+
+metric:
+  metric: time_avg          # time_avg | coherent | classical | contrast
+  t_max: 20.0
+  n_t: 64
+  # t_star: null
+
+ranking:
+  mode: fluctuation         # fluctuation | active_site
+  use_graph_distance: true
+  d_min: 3
+  d_max: 8
+  normalize: zscore         # active_site: zscore | zabs | distance | none
+  smooth: 0                 # spatial smoothing of the score (0=off)
+  beta: 0.5
+  burial: 0                 # >0 => preference for the surface
+  top: 5
+
+scoring:
+  contact_cutoff: 5.0
+  ks: [5, 10, 20]

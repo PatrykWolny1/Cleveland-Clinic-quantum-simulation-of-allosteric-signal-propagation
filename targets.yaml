@@ -1,0 +1,32 @@
+# Minimal challenge set. apo = input, holo = ground-truth.
+# ligand: null => auto-detection of the largest hetero-fragment (the drug).
+# domain_range/active_site: optional (slots for Phase II).
+targets:
+  - name: 4OBE_KRAS_G12C
+    apo: 4OBE_KRAS_G12C_apo.pdb
+    holo: 6OIM_KRAS_G12C_sotorasib_holo.pdb
+    ligand: null
+    domain_range: null
+    active_site: null
+
+  - name: 1OPL_BCR-ABL1
+    apo: 1OPL_BCR-ABL1_apo.pdb
+    holo: 5MO4_BCR-ABL1_asciminib_holo.pdb
+    ligand: null
+    domain_range: null
+    active_site: null
+
+  - name: 5TBY_Cardiac_Myosin
+    apo: 5TBY_Cardiac_Myosin_apo.pdb
+    holo: 6C1H_Cardiac_Myosin_mavacamten_holo.pdb
+    ligand: null
+    domain_range: null
+    active_site: null
+
+  # additional target - no holo => hit-list only, without scoring
+  - name: 1NKP_cMyc_Max
+    apo: 1NKP_cMyc_Max_apo.pdb
+    holo: null
+    ligand: null
+    domain_range: null
+    active_site: null
