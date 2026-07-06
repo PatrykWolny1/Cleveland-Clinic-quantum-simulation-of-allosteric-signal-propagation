@@ -1,4 +1,4 @@
-# GlobalQuantum
+# Unlocking undruggable targets: quantum simulation of allosteric signal propagation
 
 Quantum simulation of allosteric signal propagation for predicting hidden
 (allosteric / cryptic) drug-binding pockets in "undruggable" proteins, directly
