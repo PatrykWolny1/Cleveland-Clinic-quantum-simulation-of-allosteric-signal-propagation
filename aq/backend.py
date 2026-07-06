@@ -1,15 +1,15 @@
 """
-Optimization layer: a single switch CPU(numpy) <-> GPU(CuPy).
+Warstwa optimization: one przełącznik CPU(numpy) <-> GPU(CuPy).
 
-All the heavy linear algebra (eigh, matmul, einsum in the propagation)
-goes through `xp` returned by get_backend(). The stage code is written
-once and runs on both backends.
+Cała ciężka algebra linear (eigh, matmul, einsum w propagation)
+przechodzi via `xp` zwrócone via get_backend(). Kod stage'y jest
+napisany once i działa in obu backendach.
 
-- use_gpu=True and CuPy available -> computation on the GPU
-- otherwise -> numpy (multithreaded LAPACK)
+- use_gpu=True i CuPy dostępne -> computation in GPU
+- w przeciwnym razie -> numpy (LAPACK wielowatkowy)
 
-Numba (optionally) accelerates individual scalar loops on the CPU;
-if it is unavailable, pure numpy variants are used.
+Numba (optionally) accelerates pojedyncze pętle skalarne in CPU;
+if niedostepna, uzywane are czyste variants numpy.
 """
 from __future__ import annotations
 import numpy as np
@@ -29,7 +29,7 @@ try:
 except Exception:
     _HAS_NUMBA = False
 
-    def njit(*args, **kwargs): # no-op decorator when Numba is missing
+    def njit(*args, **kwargs): # no-op dekorator, when none Numby
         def wrap(f):
             return f
         if args and callable(args[0]):
@@ -41,14 +41,14 @@ except Exception:
 
 
 def get_backend(use_gpu: bool):
-    """Returns (xp, name). xp is either numpy or cupy."""
+    """Returns (xp, name). xp this numpy or cupy."""
     if use_gpu and _HAS_CUPY:
         return _cp, "cupy(gpu)"
     return np, "numpy(cpu)"
 
 
 def to_numpy(a):
-    """Bring an array (numpy or cupy) back to numpy for saving/comparison."""
+    """Sprowadza tablice (numpy or cupy) to numpy for zapisu/porownan."""
     if _HAS_CUPY and isinstance(a, _cp.ndarray):
         return _cp.asnumpy(a)
     return np.asarray(a)

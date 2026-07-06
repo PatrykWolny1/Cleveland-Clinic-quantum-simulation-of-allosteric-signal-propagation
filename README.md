@@ -1,4 +1,4 @@
-# Unlocking undruggable targets: quantum simulation of allosteric signal propagation
+# GlobalQuantum
 
 Quantum simulation of allosteric signal propagation for predicting hidden
 (allosteric / cryptic) drug-binding pockets in "undruggable" proteins, directly
@@ -61,9 +61,7 @@ detector reaches 0.85 on BCR-ABL1.
   `LEAN_K` (feature-selection width; 20 = full bank = best).
 - `final_run.py` — Per-protein routed detector with significance, matrix, top-5.
 - `viz_run.py` — 3D B-factor PDBs + PyMOL scripts.
-- `qpu_run.py` — Real CTQW circuits + full QPU feasibility profile: native depth /
-  2q gates, hardware-basis transpile (CX count + depth), estimated circuit fidelity
-  at IBM-class error rates, Trotter convergence, and a depolarizing-noise sweep.
+- `qpu_run.py` — Real CTQW circuits, resource budget, Trotter fidelity, noise.
 - `noise_run.py` — Noise resilience (dephasing + structural).
 - `coarsen.py` — Coarse-graining with retention proof.
 - `audit_run.py` — Per-channel transferable-power audit (feature diagnostic).

@@ -1,16 +1,16 @@
 """
-Representation space + OOF: I search for a space in which the rule for
-transfer between proteins becomes linear (simple).
+Spacee representation + OOF: szukamy space, w ktorej regula
+transfer between proteins staje Linear (simple).
 
-Descriptors come from the spectrum of the data matrix (cutoff graph - where LST wins).
-Per-protein transforms (crucial for transfer):
-  zscore - standardization (baseline)
-  rank_gauss - rank -> inverse normal CDF (equalizes distributions)
-  whiten - PCA-whitening (equalizes covariances)
-Evaluation: OOF (leave-one-protein-out) with a linear model (ridge) - high transfer
-= the rule is linear in this space. Additionally an RBF kernel (nonlinear space).
+Descriptory z spectrum matrix data (graph CUTOFF - there LST wygrywa).
+Transformacje per protein (kluczowe for transfer):
+  zscore - standaryzacja (odniesienie)
+  rank_gauss - ranga -> odwrotna dystrybuanta normalna (wyrownuje Distributions)
+  whiten - PCA-whitening (wyrownuje KOWARIANCJE)
+Ocena: OOF (leave-one-protein-out) model LINIOWYM (ridge) - high transfer
+= regula linear w this space. Dodatkowo jadro RBF (space nonlinear).
 
-Closed form -> fast; multiprocessing over proteins; GPU for eig.
+Forma closed-form -> quickly; MP over proteins; GPU for eig.
 """
 from __future__ import annotations
 import numpy as np
@@ -20,7 +20,7 @@ from .backend import to_numpy
 
 
 def descriptors(coords, gpu=False):
-    """Descriptors from the spectrum of L (cutoff graph). Returns (D[N x d], names)."""
+    """Descriptory z spectrum L (graph cutoff). Returns (D[N x d], names)."""
     A = graph.build_graph(coords, "cutoff", cutoff=8.0)
     L = graph.Hamiltonian(A, "laplacian")
     w, V, _, _ = propagate.eig(L, gpu); w = to_numpy(w); V = to_numpy(V)
@@ -34,16 +34,16 @@ def descriptors(coords, gpu=False):
     commute = (V2*invw).sum(1)
     hks20 = (V2*np.exp(-w*20.0)).sum(1)
     deg = A.sum(1)
-    # --- phase channels (superposition + interference + resonance + phase) ---
+    # --- channels FAZOWE (superposition + interference + resonance + phase) ---
     Hf = graph.Hamiltonian(A, "logf", sigma=1.0)
     wf, Vf, _, _ = propagate.eig(Hf, gpu); wf = to_numpy(wf); Vf = to_numpy(Vf)
     def band(M):
         W = M.copy(); np.fill_diagonal(W, 0.0)
         gd = graph.graph_distance(A); b = np.isfinite(gd) & (gd >= 3); return (W*b).sum(1)
     interf = band(to_numpy(propagate.q_interference(wf, Vf, np, 20.0))) # Re (cos)
-    quad = band(to_numpy(propagate.q_quadrature(wf, Vf, np, 20.0))) # Im (sin) - new
-    pcoh = to_numpy(propagate.phase_coherence(wf, Vf, np)) # phase-locking - new
-    # --- Peierls-phase channels (chiral interference, genuine phase) ---
+    quad = band(to_numpy(propagate.q_quadrature(wf, Vf, np, 20.0))) # Im (sin) - New
+    pcoh = to_numpy(propagate.phase_coherence(wf, Vf, np)) # phase-locking - New
+    # --- channels FAZY PEIERLSA (chiral interference, genuinna phase) ---
     gcoh, ginterf = gauge.gauge_features(A, coords, 0.15, 20.0, gpu=gpu)
     D = np.column_stack([p_low, p_mid, p_high, fied, emass, commute, hks20, deg,
                          interf, quad, pcoh, gcoh, ginterf]).astype(float)
@@ -52,7 +52,7 @@ def descriptors(coords, gpu=False):
     return D, names
 
 
-# --- space transforms (per protein) ---
+# --- transformacje space (per protein) ---
 def zscore(X):
     return (X - X.mean(0)) / (X.std(0) + 1e-9)
 
@@ -94,7 +94,7 @@ def kernel_ridge_fit(K, y, lam=1.0):
 
 
 def all_features(coords, gpu=False):
-    """Full set of channels (amplitude + phase + spectral + coded + gauge) from ~4 eig."""
+    """KOMPLET channels (amplitude + phase + spectral + coded + gauge) z ~4 eig."""
     A = graph.build_graph(coords, "cutoff", cutoff=8.0)
     gd = graph.graph_distance(A); b = np.isfinite(gd) & (gd >= 3)
     def band(M):
@@ -125,10 +125,10 @@ def all_features(coords, gpu=False):
     cols.append(band(to_numpy(propagate.q_quadrature(wf, Vf, np, 20.0)))); names.append("quadrature")
     cols.append(to_numpy(propagate.phase_coherence(wf, Vf, np))); names.append("phase_coh")
     cols.append(band(to_numpy(propagate.q_coherent(wf, Vf, np, None)))); names.append("coherent")
-    # --- adjacency: communicability ---
+    # --- adjacency: komunikowalnosc ---
     Aadj = graph.Hamiltonian(A, "adjacency"); wa, Va, _, _ = propagate.eig(Aadj, gpu)
     cols.append(band(to_numpy(propagate.q_communicability(to_numpy(wa), to_numpy(Va), np, 0.5)))); names.append("communic")
-    # --- gauge: Peierls phase ---
+    # --- gauge: phase Peierlsa ---
     gcoh, ginterf = gauge.gauge_features(A, coords, 0.15, 20.0, gpu=gpu)
     cols.append(gcoh); names.append("gauge_coh"); cols.append(ginterf); names.append("gauge_interf")
     D = np.column_stack(cols).astype(float)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-LST-QNN leave-one-protein-out: a bank of LST features + a head (quantum kernel / logistic).
-Comparison against the single best LST feature.
+LST-QNN leave-one-protein-out: bank features LST + glowica (quantum kernel / logistic).
+Comparison z single best feature LST.
   python lstnet_run.py
 """
 import os, yaml, numpy as np
@@ -40,7 +40,7 @@ def _predict_cmyc(D, names_t, xp):
     for t in tg:
         apo = data.load_apo(os.path.join(clean, t["apo"]), t["name"], None, "largest")
         Xc, _, _ = lstnet.lst_features(apo.coords)
-        pl = logistic(Xtr, ytr, Xc) # LST network trained on the 3 validation proteins
+        pl = logistic(Xtr, ytr, Xc) # sieć LST wyuczona in 3 walidacyjnych
         order = np.argsort(-pl)
         hits = [{"rank": r + 1, "chain": apo.keys[i][0], "resseq": int(apo.keys[i][1]),
                  "resname": apo.resnames[i], "score": float(pl[i])} for r, i in enumerate(order[:5])]
@@ -51,7 +51,7 @@ def _predict_cmyc(D, names_t, xp):
 
 
 def _feat_worker(arg):
-    """Feature extraction for one protein (module level -> picklable for multiprocessing)."""
+    """Extraction features for one protein (poziom modulu -> picklowalne for MP)."""
     t, clean, gpu = arg
     apo = data.load_apo(os.path.join(clean, t["apo"]), t["name"], None, "largest")
     X, _, names = lstnet.lst_features(apo.coords, gpu)
@@ -69,10 +69,10 @@ def main():
     with ProcessPoolExecutor(max_workers=min(3, len(targets))) as ex:
         for nm, X, y, nms in ex.map(_feat_worker, args):
             D[nm] = (X, y); names = nms
-    kidx = [i for i, n in enumerate(names) if n.startswith("interf")] # kernel: LST interference
+    kidx = [i for i, n in enumerate(names) if n.startswith("interf")] # kernel: interference LST
     names_t = list(D); xp, _ = get_backend(GPU)
     F = D[names_t[0]][0].shape[1]
-    print(f"LST-QNN leave-one-protein-out ({F} features: 4 LST mechanisms + structural)\n")
+    print(f"LST-QNN leave-one-protein-out ({F} cech: 4 mechanismy LST + structurelne)\n")
     qk, lg, bl, bn = [], [], [], []
     for these in names_t:
         Xtr = np.vstack([D[n][0] for n in names_t if n != these])
@@ -82,10 +82,10 @@ def main():
         Ktr = qnn.quantum_kernel(Ptr, Ptr, xp); Kte = qnn.quantum_kernel(Pte, Ptr, xp)
         pk = qnn.kernel_logistic(Ktr, ytr, Kte)
         pl = logistic(Xtr, ytr, Xte)
-        # BLEND: averaged rank (logistic + kernel + best single training feature)
+        # BLEND: umeanona ranga (logistic + kernel + best single feature treningowa)
         def _rankpct(v):
             r = np.argsort(np.argsort(v)); return r / (len(r) - 1)
-        # pick the best single feature on the TRAINING set (leakage-free)
+        # wybierz best single feature in TRENINGU (leakage-free)
         jb = max(range(Xtr.shape[1]), key=lambda j: max(auc(Xtr[:, j], ytr), auc(-Xtr[:, j], ytr)))
         sgn = 1.0 if auc(Xtr[:, jb], ytr) >= auc(-Xtr[:, jb], ytr) else -1.0
         blend = (_rankpct(pl) + _rankpct(pk) + _rankpct(sgn * Xte[:, jb])) / 3
@@ -94,9 +94,9 @@ def main():
         qk.append(auc(pk, yte)); lg.append(auc(pl, yte)); bl.append(auc(blend, yte)); bn.append(auc(blend_noqk, yte))
         print(f" test={these:22s} QKernel={qk[-1]:.3f} logistic={lg[-1]:.3f} "
               f"BLEND={bl[-1]:.3f} BLEND_noQK={bn[-1]:.3f} best_single={bf:.3f}")
-    print(f"\n mean: QKernel={np.mean(qk):.3f} logistic={np.mean(lg):.3f} "
+    print(f"\n meana: QKernel={np.mean(qk):.3f} logistic={np.mean(lg):.3f} "
           f"BLEND={np.mean(bl):.3f} BLEND_noQK={np.mean(bn):.3f}")
-    print(f" -> contribution of the quantum kernel to the BLEND: {np.mean(bl)-np.mean(bn):+.3f}")
+    print(f" -> wklad quantumgo kernela to BLEND: {np.mean(bl)-np.mean(bn):+.3f}")
     _predict_cmyc(D, names_t, xp)
 
 

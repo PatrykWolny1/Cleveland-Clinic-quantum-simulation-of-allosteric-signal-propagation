@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Search for a space in which the transfer rule is linear + OOF stacking.
+Szukanie space, w ktorej regula transfer jest Linear + OOF stacking.
   python spaces_run.py
 """
 import os, yaml, numpy as np
@@ -39,9 +39,9 @@ def main():
     D = {r[0]: (r[1], r[2], r[3], r[4]) for r in res}
     names = [t["name"] for t in train]
 
-    print("Linear transfer (ridge) and RBF KERNEL across different spaces (leave-one-out):\n")
-    print(f" {'space':12s} {'linear/protein':32s} lin_mean rbf_mean")
-    oof = {} # oof[space][protein] = leave-one-out prediction
+    print("Transfer Linear (ridge) i JADRO RBF w roznych spaceach (leave-one-out):\n")
+    print(f" {'space':12s} {'linear/protein':32s} lin_meana rbf_meana")
+    oof = {} # oof[space][protein] = prediction leave-one-out
     for sp, tf in spaces.TRANSFORMS.items():
         Xs = {n: tf(D[n][0]) for n in names}
         lin, rbf, oof[sp] = [], [], {}
@@ -59,19 +59,19 @@ def main():
         perb = " ".join(f"{n.split('_')[0]}={a:.2f}" for n, a in zip(names, lin))
         print(f" {sp:12s} {perb:32s} {np.mean(lin):.3f} {np.mean(rbf):.3f}")
 
-    # OOF stacking: rank-mean of the linear predictions across ALL spaces
-    print("\nOOF stacking (rank-mean of the linear spaces):")
+    # OOF stacking: rank-meana prediction liniowych that WSZYSTKICH space
+    print("\nOOF stacking (rank-meana space liniowych):")
     st = []
     for these in names:
         blended = np.mean([_rank(oof[sp][these]) for sp in spaces.TRANSFORMS], 0)
         st.append(auc(blended, D[these][1]))
         print(f" test={these:22s} AUC={st[-1]:.3f}")
-    print(f" mean={np.mean(st):.3f}")
+    print(f" meana={np.mean(st):.3f}")
 
-    # best space -> law applied to c-Myc
+    # best space -> prawo in c-Myc
     for t in test:
         Dc, _, keys, resn = D[t["name"]]
-        # shared linear operator in rank_gauss (distribution alignment)
+        # shared operator linear w rank_gauss (wyrownanie distributions)
         Xtr = np.vstack([spaces.rank_gauss(D[n][0]) for n in names])
         ytr = np.concatenate([D[n][1] for n in names]).astype(float)
         w = spaces.ridge_fit(Xtr, ytr)

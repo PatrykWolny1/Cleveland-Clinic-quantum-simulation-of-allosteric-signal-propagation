@@ -1,14 +1,14 @@
 """
-Peierls phase - a synthetic gauge field (genuinely complex phase).
+Phase Peierlsa - syntetyczne pole cechowania (genuinnie zespolona phase).
 
-So far the eigenvectors were real (phase = sign). Here H is complex-Hermitian
-with a phase on the edges:
-  theta_ij = B * (x_i y_j - x_j y_i) (antisymmetric -> H Hermitian)
-  H_ij = -exp(i theta_ij) for a contact; diag = degree.
-The quantum walk becomes CHIRAL -> a genuine interference phase.
-I average the descriptors over +-B (removing the arbitrary field direction).
+Dotad eigenvectors byly rzeczywiste (phase = sign). Here H jest zespolony-
+hermitowski z phase in edges:
+  theta_ij = B * (x_i y_j - x_j y_i) (antysymetryczne -> H hermitowski)
+  H_ij = -exp(i theta_ij) for kontaktu; diag = degree.
+Quantum walk staje CHIRALNY -> genuinna interference phase.
+Descriptory umeanamy over +-B (removeiecie arbitralnego kierunku pola).
 
-Optimization: complex eigh (numpy), reuse; MP; GPU (cupy complex eigh).
+Optimization: eigh zespolony (numpy), reuzycie; MP; GPU (cupy eigh complex).
 """
 from __future__ import annotations
 import numpy as np
@@ -18,7 +18,7 @@ from .backend import get_backend, to_numpy
 
 def Hamiltonian_gauge(A, coords, B=0.15):
     x = coords[:, 0]; y = coords[:, 1]
-    theta = B * (np.outer(x, y) - np.outer(y, x)) # antisymmetric
+    theta = B * (np.outer(x, y) - np.outer(y, x)) # antysymetryczne
     H = -(A > 0).astype(complex) * np.exp(1j * theta)
     np.fill_diagonal(H, A.sum(1))
     return H
@@ -31,8 +31,8 @@ def eig_complex(H, gpu=False):
 
 
 def gauge_features(A, coords, B=0.15, T=20.0, d_min=3, gpu=False):
-    """Both Peierls-phase descriptors from a single eig at each B (averaged over +-B):
-       gauge_coh - phase-locking per residue (chiral propagator),
+    """Oba descriptory phase Peierlsa z One eig in B (umeanone over +-B):
+       gauge_coh - phase-locking per residue (chiralny propagator),
        gauge_interf - band-score chiral interference (|Im<U>|)."""
     gd = graph.graph_distance(A)
     b = np.isfinite(gd) & (gd >= d_min)

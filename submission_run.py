@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 FINAL CONSOLIDATION: router (unsupervised) + transfer GB (learned) -> fusion,
-significance (AUC+p+CI) for each, best selection per protein. c-Myc + matrices.
+significance (AUC+p+CI) for each, selection best per protein. c-Myc + matrices.
   python submission_run.py
-Optimization: multiprocessing over proteins, analytic GPU eig; GB is light CPU (not QPU).
+Optimization: MP over proteins, analytically, GPU eig; GB light CPU (not QPU).
 """
 import os, json, yaml, numpy as np
 from concurrent.futures import ProcessPoolExecutor
@@ -14,8 +14,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 CFG = yaml.safe_load(open(os.path.join(ROOT, "config.yaml")))
 GPU = CFG.get("backend", {}).get("use_gpu", False)
 BALAST = {"coherent", "communic", "interf_T40"}
-USE_RESONANCE = False # resonance hurt KRAS (0.414) -> optional, OFF by default
-LEAN_K = 20 # transfer GB: select top-k features by AUC on the training set (anti-overfitting)
+USE_RESONANCE = False # resonance hurt KRAS (0.414) -> optional, by default OFF
+LEAN_K = 20 # transfer GB: selekcja top-k features by AUC on training set (anty-overfitting)
 
 
 def auc(p, y): return score.evaluate(p, np.argsort(-p), y, (5,)).get("roc_auc")
@@ -25,7 +25,7 @@ def _raw(name, rd): p = os.path.join(rd, name.split("_")[0]+".pdb"); return p if
 
 
 def _worker(arg):
-    """Returns curated features, router detector, label, keys."""
+    """Returns features (curated), detector routera, etykiete, klucze."""
     t, clean, rawdir = arg
     xp, _ = get_backend(GPU)
     apo = data.load_apo(os.path.join(clean, t["apo"]), t["name"], None, "largest")
@@ -41,7 +41,7 @@ def _worker(arg):
         L = graph.Hamiltonian(A, "laplacian"); wL, VL, _, _ = propagate.eig(L, GPU)
         _, s_gnm = rank.rank_active_site(to_numpy(propagate.gnm_cov(wL, VL, xp)), active, gd, normalize="zabs")
         cand["gnm_zabs"] = s_gnm
-        if USE_RESONANCE: # resonance (QPU-native CTQW) - experimental; hurt KRAS
+        if USE_RESONANCE: # resonance (QPU-native CTQW) - eksperymentalny; hurt KRAS
             res = to_numpy(propagate.resonance_overlap(to_numpy(wL), to_numpy(VL), xp, active,
                                                        times=(10.0, 20.0, 40.0), gpu=GPU))
             res[np.asarray(active, int)] = -np.inf
@@ -72,7 +72,7 @@ def main():
     best = {}
     for these in tr:
         X, y, keys, resn, det, detn, regime = R[these]
-        # transfer GB leave-one-out with LEAN feature selection (top-k by AUC on TRAINING, leakage-free)
+        # transfer GB leave-one-out z LEAN feature selection (top-k by AUC in TRENINGU, leakage-free)
         tr_others = [n for n in tr if n != these]
         def _fauc(j):
             vs = []
@@ -95,7 +95,7 @@ def main():
             print(f" {nm:20s} AUC={st['auc']:.3f} CI[{st['ci_low']:.3f},{st['ci_high']:.3f}] p={st['p']:.2e}")
         print(f" -> best: {best_nm} (AUC={best_auc:.3f})")
         best[these] = (best_nm, best_sc, keys, resn)
-        # save: fusion top5 + significance for all
+        # save: top5 fusion + significance all
         st_all = {nm: stats.significance(np.where(np.isfinite(sc), sc, np.nanmin(sc)), y, n_boot=1500)
                   for nm, sc in cand.items()}
         order = np.argsort(-ens)
@@ -104,7 +104,7 @@ def main():
         json.dump({"name": these, "regime": regime, "best": best_nm, "significance": st_all,
                    "fusion_top5": hits}, open(os.path.join(out, f"{these}_submission.json"), "w"), indent=2)
 
-    # c-Myc: fusion router + GB (3 proteins)
+    # c-Myc: fusion router + GB(3 protein)
     Xall = np.vstack([R[n][0] for n in tr]); yall = np.concatenate([R[n][1] for n in tr]).astype(float)
     for t in test:
         X, _, keys, resn, det, detn, regime = R[t["name"]]

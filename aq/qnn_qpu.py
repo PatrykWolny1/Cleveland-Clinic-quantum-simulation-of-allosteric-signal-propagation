@@ -1,15 +1,15 @@
 """
-Quantum neural network for QPU: data re-uploading VQC.
+Quantum siec neural Under QPU: data re-uploading VQC.
 
-Architecture (Perez-Salinas): few qubits, ALL features loaded
-repeatedly (re-uploading) -> universal approximator, robust to the barren
-plateau. Layer: data encoding (RY/RZ from PCA features) + trainable layer
-(RY/RZ) + CNOT ring. Readout <Z_0>.
-Training: parameter-shift (gradient NATIVE to the QPU). The circuit is an explicit
-sequence of gates -> exportable to AWS Braket / Classiq.
+Architektura (Perez-Salinas): few qubits, WSZYSTKIE features wgrywane
+wielokrotnie (re-uploading) -> uniwersalny aproksymator robust in barren
+plateau. Warstwa: enkodowanie data (RY/RZ z features PCA) + warstwa trenowalna
+(RY/RZ) + pierscien CNOT. Odczyt <Z_0>.
+Trening: parameter-shift (gradient NATYWNY for QPU). Circuit = jawna sekwencja
+gates -> export in AWS Braket / Classiq.
 
-This is QPU-oriented code: I simulate the statevector for training, but the circuit maps
-1:1 onto gate-based hardware (no tricks that are non-executable on a QPU).
+This jest kod Under QPU: symulujemy statevector to treningu, but circuit mapuje 
+1:1 in hardware gate-based (without sztuczek nieexecutablech on QPU).
 """
 from __future__ import annotations
 import numpy as np
@@ -50,18 +50,18 @@ def _cnot(state, c, t, n, xp):
 
 
 def forward(X, theta, n, L, xp):
-    """X:(B, 2n) PCA features; theta:(L,n,2). Returns P(1) on qubit 0."""
+    """X:(B, 2n) features PCA; theta:(L,n,2). Returns P(1) in kubicie 0."""
     B = X.shape[0]
     state = xp.zeros((B, 2**n), dtype=xp.complex128); state[:, 0] = 1.0
     state = state.reshape((B,)+(2,)*n)
     for l in range(L):
-        for q in range(n): # data encoding (re-uploading)
+        for q in range(n): # enkodowanie data (re-uploading)
             state = _ry(state, np.pi*X[:, 2*q], q, n, xp)
             state = _rz(state, np.pi*X[:, 2*q+1], q, n, xp)
-        for q in range(n): # trainable layer
+        for q in range(n): # warstwa trenowalna
             state = _ry(state, theta[l, q, 0], q, n, xp)
             state = _rz(state, theta[l, q, 1], q, n, xp)
-        for q in range(n): # entanglement
+        for q in range(n): # splatanie
             state = _cnot(state, q, (q+1) % n, n, xp)
     psi = state.reshape(B, 2, 2**(n-1))
     return (xp.abs(psi[:, 1, :])**2).sum(1)
@@ -73,7 +73,7 @@ def _loss(X, y, theta, n, L, xp, w):
 
 
 def train(X, y, n, L=3, steps=120, lr=0.15, seed=0):
-    """Parameter-shift + Adam (QPU-native gradient)."""
+    """Parameter-shift + Adam (gradient natywny QPU)."""
     import numpy as xp
     rng = np.random.default_rng(seed)
     pos = max(1.0, y.sum()); neg = max(1.0, (1-y).sum())
@@ -100,13 +100,13 @@ def predict(X, theta, n, L=3):
 
 
 def export_circuit(theta, n, L):
-    """Explicit sequence of gates (for Braket/Classiq). x_k = PCA features."""
-    lines = [f"# data re-uploading VQC: {n} qubits, {L} layers"]
+    """Jawna sekwencja gates (for Braket/Classiq). x_k = features PCA."""
+    lines = [f"# data re-uploading VQC: {n} qubits, {L} warstw"]
     for l in range(L):
         for q in range(n):
-            lines.append(f"RY(pi*x_{2*q}) q{q}; RZ(pi*x_{2*q+1}) q{q} # encode L{l}")
+            lines.append(f"RY(pi*x_{2*q}) q{q}; RZ(pi*x_{2*q+1}) q{q} # enkod L{l}")
         for q in range(n):
-            lines.append(f"RY({theta[l,q,0]:+.3f}) q{q}; RZ({theta[l,q,1]:+.3f}) q{q} # train L{l}")
+            lines.append(f"RY({theta[l,q,0]:+.3f}) q{q}; RZ({theta[l,q,1]:+.3f}) q{q} # tren L{l}")
         for q in range(n):
             lines.append(f"CNOT q{q},q{(q+1)%n}")
     lines.append("MEASURE q0 -> P(1)")

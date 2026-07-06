@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-ML/AI law discovery: Gradient Boosting + genetic symbolic regression (gplearn),
-rank_gauss space, leave-one-protein-out + c-Myc.
+Odkrywanie prawa ML/AI: Gradient Boosting + symboliczna genetyczna (gplearn),
+space rank_gauss, leave-one-protein-out + c-Myc.
   python mlaw_run.py (gplearn optional: pip install gplearn)
 """
 import os, yaml, numpy as np
@@ -35,7 +35,7 @@ def main():
     D = {r[0]: (r[1], r[2], r[3], r[4]) for r in res}; names = res[0][5]
     tr = [t["name"] for t in train]
 
-    print("ML/AI leave-one-protein-out (rank_gauss space)\n")
+    print("ML/AI leave-one-protein-out (space rank_gauss)\n")
     gb, sy, imp_acc = [], [], np.zeros(len(names))
     for these in tr:
         Xtr = np.vstack([D[n][0] for n in tr if n != these])
@@ -47,14 +47,14 @@ def main():
         if ps is not None:
             asy = auc(ps, D[these][1]); sy.append(asy)
             print(f" test={these:22s} GB={ag:.3f} symbolic={asy:.3f}")
-            print(f" formula: {form}")
+            print(f" wzor: {form}")
         else:
-            print(f" test={these:22s} GB={ag:.3f} (gplearn not installed: pip install gplearn)")
-    print(f"\n mean GB={np.mean(gb):.3f}" + (f" symbolic={np.mean(sy):.3f}" if sy else ""))
-    print(" GB feature importance (top):", ", ".join(
+            print(f" test={these:22s} GB={ag:.3f} (gplearn none: pip install gplearn)")
+    print(f"\n meana GB={np.mean(gb):.3f}" + (f" symbolic={np.mean(sy):.3f}" if sy else ""))
+    print(" GB importance features (top):", ", ".join(
         f"{names[i]}={imp_acc[i]/len(tr):.2f}" for i in np.argsort(-imp_acc)[:5]))
 
-    # c-Myc: GB trained on 3 + symbolic formula
+    # c-Myc: GB wyuczony in 3 + symboliczny wzor
     for t in test:
         Xtr = np.vstack([D[n][0] for n in tr]); ytr = np.concatenate([D[n][1] for n in tr]).astype(float)
         pg, _ = mlaw.gb_fit_predict(Xtr, ytr, D[t["name"]][0])

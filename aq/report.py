@@ -1,13 +1,13 @@
 """
-Stage 9 - save deliverables and interpretability.
+Stage 9 - save deliverables i interpretowalnosc.
 
-For each target:
-  <name>_connectivity.npy - N x N connectivity matrix (deliverable #1)
-  <name>_hitlist.json/csv - top-5 predicted sites (deliverable #2)
-  <name>_heatmap.png - matrix preview (if matplotlib is available)
-Globally:
-  leaderboard.csv - one row per configuration/target (for iteration)
-  report.md - concise methodology report (deliverable #3)
+For each targetu:
+  <name>_connectivity.npy - connectivity matrix N x N (deliverable #1)
+  <name>_hitlist.json/csv - top-5 przewidzianych miejsc (deliverable #2)
+  <name>_heatmap.png - podglad matrix (if matplotlib)
+Globalnie:
+  leaderboard.csv - one row in konfiguracje/target (to iteracji)
+  report.md - zwiezly raport metodologiczny (deliverable #3)
 """
 from __future__ import annotations
 import os
@@ -63,15 +63,15 @@ def save_leaderboard(outdir, rows):
 
 
 def save_report(outdir, cfg, rows):
-    lines = ["# Phase I - baseline: methodology report\n",
-             "## Quantum metric\n",
-             "Continuous-time quantum walk in the single-excitation subspace "
-             "over the residue contact graph. Propagator U(t)=exp(-iHt); "
-             "connectivity metric M_ij = <|<j|U(t)|i>|^2>_t. Proxy for the "
-             "biological signal: the probability of quantum excitation transfer "
-             "between residues defines a dynamic connectivity that, in allostery, "
-             "links the distal pocket to the active site.\n",
-             "## Configuration\n",
+    lines = ["# Phase I - baseline: raport metodologiczny\n",
+             "## Metryka quantum\n",
+             "Continuous-time quantum walk w single-excitation subspace "
+             "in graph kontaktow reszt. Propagator U(t)=exp(-iHt); metric "
+             "connectivity M_ij = <|<j|U(t)|i>|^2>_t. Proxy sygnalu biologicznego: "
+             "prawdopodobienstwo quantumgo transfer wzbudzenia between residues "
+             "wyznacza dynamiczna connectivity, which w allosterii combines distal "
+             "pocket z active site.\n",
+             "## Konfiguracja\n",
              "```yaml", json.dumps(cfg, indent=2), "```\n",
              "## Results per target\n"]
     for r in rows:

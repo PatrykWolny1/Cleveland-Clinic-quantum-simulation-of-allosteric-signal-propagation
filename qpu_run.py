@@ -1,61 +1,42 @@
 #!/usr/bin/env python3
 """
-QPU execution profile (CTQW). Per protein: coarse-grain -> real XY-hopping circuit
-(Qiskit Aer), then report the full near-term-hardware feasibility profile:
-  - qubit budget (= coarse nodes), native depth and 2-qubit gate count,
-  - hardware-basis transpile (cx/rz/sx/x): depth + CX count (the honest numbers),
-  - estimated surviving circuit fidelity from CX count at IBM-class error rates,
-  - Trotter convergence (accuracy vs steps) and fidelity vs the classical walk,
-  - noise degradation sweep (depolarizing) -> correlation with the clean result.
-Circuits export to AWS Braket / Classiq / IBM (qc: OpenQASM).
+Execution on QPU (CTQW): coarse-graining -> real circuit XY-hopping (Qiskit Aer),
+agreement z classicalm e^{-iHt} (Trotter error), budzet resources (qubits/depth/
+gates 2q) i degradation under noise. Ready under AWS Braket / Classiq / IBM.
   python qpu_run.py
-This is code written FOR QPU -> the CPU/GPU speed rule yields to the device;
-the Aer simulator stands in for hardware during development.
+This jest kod Under QPU -> reguła CPU/GPU yields; symulator zastapi hardware.
 """
 import os, yaml, numpy as np
 from aq import data, graph, coarse, qpu_ctqw as Q
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CFG = yaml.safe_load(open(os.path.join(ROOT, "config.yaml")))
-M_QUBITS = 10          # qubit budget (coarse-grained nodes)
-T = 6.0; STEPS = 12    # walk time and Trotter steps (accuracy/depth trade-off)
-NOISE_P = (0.005, 0.01, 0.02)
+M_QUBITS = 12 # qubit budget (coarse-grained nodes)
+T = 6.0; STEPS = 12
 
 
 def main():
     clean = os.path.join(ROOT, CFG["paths"]["pdb_clean"])
-    targets = yaml.safe_load(open(os.path.join(ROOT, "targets.yaml")))["targets"]
-    print(f"CTQW on QPU - feasibility profile (coarse -> {M_QUBITS} qubits, Trotter={STEPS})\n")
-    hdr = (f"  {'protein':22s}{'N':>5s}{'qb':>4s}{'depth':>6s}{'2q':>5s} | "
-           f"{'hw_dep':>6s}{'CX':>5s}{'fid.5%':>7s}{'fid1%':>7s} | {'Trot':>6s} | noise corr p="
-           + "/".join(str(p) for p in NOISE_P))
-    print(hdr); print("  " + "-"*len(hdr))
-    for t in targets:
+    T_ = yaml.safe_load(open(os.path.join(ROOT, "targets.yaml")))["targets"]
+    print(f"CTQW on QPU (coarse -> {M_QUBITS} qubits, Trotter steps={STEPS})\n")
+    print(f" {'protein':22s} {'qubits':>6s} {'depth':>6s} {'2q':>5s} {'blad_Trot':>9s} {'kor_noise(p=.01)':>15s}")
+    for t in T_:
         apo = data.load_apo(os.path.join(clean, t["apo"]), t["name"], None, "largest")
-        N = len(apo.coords)
         A = graph.build_graph(apo.coords, "cutoff", cutoff=8.0)
         labels, Ac, sizes = coarse.spectral_coarsen(A, M_QUBITS)
         Ac = (Ac > 0).astype(float); np.fill_diagonal(Ac, 0.0)
-        if np.triu(Ac, 1).sum() == 0:
-            print(f"  {t['name']:22s} coarse graph disconnected - skip"); continue
-        src = int(np.argmax(Ac.sum(1)))
+        src = int(np.argmax(Ac.sum(1))) # node-source (najwyzszy degree)
         qc = Q.build_ctqw(Ac, src, t=T, steps=STEPS)
-        nat, hw = Q.resources_hw(qc)
-        f05 = Q.estimated_fidelity(hw["cx"], hw["1q"], 0.005)
-        f1 = Q.estimated_fidelity(hw["cx"], hw["1q"], 0.01)
-        cl = Q.classical_ctqw(Ac, src, T); pv = Q.statevector_probs(qc)
-        trot = float(np.abs(pv - cl).max())
-        cors = []
-        for p in NOISE_P:
-            pn = Q.noisy_probs(qc, p_depol=p, shots=1024)
-            cors.append(np.corrcoef(pv, pn)[0, 1])
-        cstr = "/".join(f"{c:.2f}" for c in cors)
-        print(f"  {t['name']:22s}{N:>5d}{nat['qubits']:>4d}{nat['depth']:>6d}{nat['2q']:>5d} | "
-              f"{hw['depth']:>6d}{hw['cx']:>5d}{f05:>7.2f}{f1:>7.2f} | {trot:>6.2f} | {cstr}")
-    print(f"\n  Qubit budget = 1 qubit / coarse node; full protein (N shown) -> coarsen to the")
-    print(f"  hardware budget (IBM/IonQ 100+ qubits). Trade-off: more Trotter steps lower the")
-    print(f"  Trotter error but raise depth+CX -> lower fidelity; coarse-graining + error")
-    print(f"  mitigation keep circuits shallow. Export: OpenQASM -> AWS Braket / Classiq / IBM.")
+        pv = Q.statevector_probs(qc); cl = Q.classical_ctqw(Ac, src, t=T)
+        err = float(np.abs(pv - cl).max())
+        res = Q.resources(qc)
+        pn = Q.noisy_probs(qc, p_depol=0.01, shots=2048)
+        kor = float(np.corrcoef(pv, pn)[0, 1])
+        print(f" {t['name']:22s} {res['qubits']:6d} {res['depth']:6d} {res['2q_gates']:5d} "
+              f"{err:9.4f} {kor:15.3f}")
+    print(f"\nBudzet: 1 qubit / node coarse. Full protein (N={{170..954}}) -> coarse to "
+          f"budzetu hardwareu (IBM/IonQ ~100+ qubits). Depth ~ steps x edges.")
+    print("Export in hardware: qc.qasm() / Braket / Classiq. Noise -> mitigation + plytsze circuits.")
 
 
 if __name__ == "__main__":

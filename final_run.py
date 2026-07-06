@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-CONSOLIDATED submission. For each protein:
-  - the router selects the predictor (proximal gnm_zabs / distal LST),
+SKONSOLIDOWANE Submission. For each protein:
+  - router selects predictor (proximal gnm_zabs / distal LST),
   - significance: AUC + p-value + 95% CI (bootstrap),
-  - connectivity matrix (.npy) + top-5 hit-list.
-c-Myc: routed top-5 (without scoring). Also pulls in the pairs from extra_targets.yaml (ASD).
+  - connectivity matrix (.npy) + hit-list top-5.
+c-Myc: routed top-5 (without scoringu). Wciaga also pary z extra_targets.yaml (ASD).
 
   python final_run.py
 
-Optimization: analytic metric, multiprocessing over proteins, GPU under use_gpu; sampling
-(sample.py) for N beyond the budget.
+Optimization: metric analytic, MP over proteins, GPU under use_gpu; sampling
+(sample.py) for N poza budzetem.
 """
 import os, json, yaml, numpy as np
 from concurrent.futures import ProcessPoolExecutor
@@ -37,7 +37,7 @@ def _detectors(coords, raw_path, apo):
     M_lst = to_numpy(propagate.q_interference(wf, Vf, xp, 20.0))
     _, s_lst = rank.rank_fluctuation(M_lst, gd, d_min=3)
     cand = {"LST_logf_interf": s_lst}; mats = {"LST_logf_interf": M_lst}
-    # proximal: gnm_zabs (when a cofactor is present)
+    # proximal: gnm_zabs (when cofactor)
     active = []
     if raw_path is not None:
         active, cof = data.detect_active_site(raw_path, apo)
@@ -86,7 +86,7 @@ def main():
             results.append(out)
 
     print("=" * 78)
-    print("CONSOLIDATED submission (router + significance)")
+    print("SKONSOLIDOWANE Submission (router + significance)")
     print("=" * 78)
     for r in results:
         print(f"\n{r['name']} [{r['regime']}, detector={r['detector']}, "
@@ -97,7 +97,7 @@ def main():
                   f"p={st['p']:.2e}")
         top = ", ".join(f"{h['chain']}{h['resseq']}{h['resname']}" for h in r["hits"])
         print(f" top5: {top}")
-    print(f"\n-> connectivity matrices (.npy) + hit-lists (.json) in {out_dir}")
+    print(f"\n-> connectivity matrices (.npy) + hit-listy (.json) w {out_dir}")
 
 
 if __name__ == "__main__":

@@ -1,17 +1,16 @@
 """
-Stage 4/5 - propagation and connectivity matrix, with an explicit
-eigendecomposition API (this enables caching: I compute eig(H) once and reuse
-it across many metrics/calls).
+Stage 4/5 - propagation i connectivity matrix, z jawnym API in eigendecomposition
+(umozliwia CACHE: computesmy eig(H) once i uzywamy to many metryk/times).
 
-Quantum metrics:
+Metryki quantum:
   time_avg : <|U(t)|^2>_t (baseline)
   coherent : |U(t*)|^2 (retains interference)
-Classical analog (diffusion) - the comparison required by the challenge:
-  classical: <exp(-Lt)>_t (heat-kernel of the Laplacian)
-Contrast metric (addressing the hypothesis: quantum vs diffusion):
-  contrast : Q_time_avg - C_classical (where quantum transport beats diffusion)
+Analog classical (dyfusion) - to comparison requiredgo via challenge:
+  classical: <exp(-Lt)>_t (heat-kernel in Laplacianie)
+Metryka kontrastu (in temat hypothesis: kwant vs dyfusion):
+  contrast : Q_time_avg - C_classical (gdzie transport quantum beats dyfusion)
 
-All algebra runs in numpy/CuPy. eig(H) and eig(L) can be supplied externally.
+Whole algebra in numpy/CuPy. eig(H) i eig(L) can podac z zewnatrz.
 """
 from __future__ import annotations
 import numpy as np
@@ -19,13 +18,13 @@ from .backend import get_backend, to_numpy
 
 
 def eig(H, use_gpu=False):
-    """Eigendecomposition of the symmetric H. Returns (w, V, xp, name)."""
+    """Eigendecomposition symetrycznego H. Returns (w, V, xp, name)."""
     xp, name = get_backend(use_gpu)
     w, V = xp.linalg.eigh(xp.asarray(H, dtype=xp.float64))
     return w, V, xp, name
 
 
-# --------- metrics computed from a precomputed eigendecomposition ---------
+# --------- metric liczone z GOTOWEJ eigendecomposition -------------------
 def q_time_avg(w, V, xp, t_max=20.0, n_t=64):
     Vc = V.astype(xp.complex128)
     times = xp.linspace(t_max / n_t, t_max, n_t)
@@ -47,7 +46,7 @@ def q_coherent(w, V, xp, t_star=None):
 
 
 def c_heat(wL, VL, xp, t_max=20.0, n_t=64):
-    """Classical diffusion: <exp(-L t)>_t. wL,VL = eig(Laplacian)."""
+    """Classical dyfusion: <exp(-L t)>_t. wL,VL = eig(Laplacianu)."""
     times = xp.linspace(t_max / n_t, t_max, n_t)
     M = xp.zeros(VL.shape, dtype=xp.float64)
     for t in times:
@@ -56,10 +55,10 @@ def c_heat(wL, VL, xp, t_max=20.0, n_t=64):
     return M / n_t
 
 
-# --------- high-level dispatcher (without cache) ------------------------
+# --------- wysokopoziomowy dispatcher (without cache) ------------------------
 def connectivity_matrix(H, cfg, L=None):
-    """Returns (M numpy, backend_name). L (Laplacian) is needed for the
-    classical/contrast metrics; if None, it is computed as eig(H) when H=L."""
+    """Returns (M numpy, backend_name). L (Laplacian) needed dla
+    metryk classical/contrast; if None, computed as eig(H) when H=L."""
     m = cfg.get("metric", "time_avg")
     gpu = cfg.get("use_gpu", False)
     t_max, n_t, t_star = cfg.get("t_max", 20.0), cfg.get("n_t", 64), cfg.get("t_star")
@@ -83,27 +82,27 @@ def connectivity_matrix(H, cfg, L=None):
     elif m == "resistance":
         wL, VL, _, _ = eig(H if L is None else L, gpu); M = resistance(wL, VL, xp)
     else:
-        raise ValueError(f"unknown metric: {m}")
+        raise ValueError(f"nieznana metric: {m}")
     return to_numpy(M), name
 
 
-# --------- classical analogs of allostery from eig(Laplacian) ----------------
+# --------- classical analogi allosterii z eig(Laplacianu) ----------------
 def pinv_laplacian(wL, VL, xp, tol=1e-9):
-    """Moore-Penrose L^+ from the eigendecomposition (skips the zero mode)."""
+    """Moore-Penrose L^+ z eigendecomposition (skips zero mode)."""
     inv = xp.where(wL > tol, 1.0 / xp.where(wL > tol, wL, 1.0), 0.0)
     return (VL * inv) @ VL.T
 
 
 def gnm_cov(wL, VL, xp):
-    """GNM: covariance of residue fluctuations = L^+ (the standard predictor
-    of allosteric coupling in an elastic network)."""
+    """GNM: kowariancja fluktuacji residues = L^+ (standardowy predictor
+    sviaenia allosterycznego w sieci elastycznej)."""
     return pinv_laplacian(wL, VL, xp)
 
 
 def resistance(wL, VL, xp):
-    """Effective resistance (commute-time) - connectivity independent of the
-    geodesic distance (it accounts for all parallel paths).
-    Returns -R, so higher = more strongly coupled."""
+    """Effective resistance (commute-time) - connectivity niedependent from
+    geodezyjnej distance (uwzglednia all rownolegle sciezki).
+    Returns -R, so wyzej = silniej sviaone."""
     Lp = pinv_laplacian(wL, VL, xp)
     d = xp.diag(Lp)
     R = d[:, None] + d[None, :] - 2.0 * Lp
@@ -111,12 +110,12 @@ def resistance(wL, VL, xp):
 
 
 def communicability(wA, VA, xp, beta=0.15):
-    """Estrada's classical communicability: expm(beta*A). wA,VA=eig(A)."""
+    """Classical komunikowalnosc Estrady: expm(beta*A). wA,VA=eig(A)."""
     return (VA * xp.exp(beta * wA)) @ VA.T
 
 
 def q_communicability(wA, VA, xp, beta=0.5):
-    """Quantum communicability: |expm(i*beta*A)|^2 (retains interference)."""
+    """Quantum komunikowalnosc: |expm(i*beta*A)|^2 (retains interference)."""
     Vc = VA.astype(xp.complex128)
     G = (Vc * xp.exp(1j * beta * wA)) @ Vc.conj().T
     return G.real ** 2 + G.imag ** 2
@@ -130,10 +129,10 @@ def heat_avg_analytic(wL, VL, xp, T=20.0):
 
 
 def q_interference(w, V, xp, T=20.0):
-    """LST eq. 10: transfer with the interference SIGN PRESERVED.
+    """LST rown. 10: transfer z ZACHOWANYM signiem interference.
     Re<U(t)>_ij = sum_a V_ia V_ja cos(l_a t); <cos(l t)>_[0,T] = sinc(lT).
-    M_ij = sum_a V_ia V_ja sinc(l_a T) - a single O(N^3), sign = constructive(+)
-    / destructive(-) interference between residues."""
+    M_ij = sum_a V_ia V_ja sinc(l_a T) - one O(N^3), sign = konstruktywna(+)
+    / destruktywna(-) interference between residues."""
     x = w * T
     sinc = xp.where(xp.abs(x) > 1e-9, xp.sin(x) / xp.where(xp.abs(x) > 1e-9, x, 1.0), 1.0)
     return (V * sinc) @ V.T
@@ -141,40 +140,40 @@ def q_interference(w, V, xp, T=20.0):
 
 def q_ita(w, V, xp):
     """Quantum infinite-time average: M_ij = sum_a V_ia^2 V_ja^2 (one matmul).
-    Ranking-equivalent to <|U(t)|^2>_t, ~64x cheaper than the loop."""
+    Rownowazna rankingowo <|U(t)|^2>_t, ~64x cheaper niz petla."""
     P = V.real ** 2 if xp.iscomplexobj(V) else V ** 2
     return P @ P.T
 
 
 def yukawa(wL, VL, xp, m2=0.5):
-    """Massive propagator (encoded H = -box + V): G=(L+m^2)^{-1}.
-    Screened significance at scale 1/m (LST + encoded model)."""
+    """Propagator masywny (coded H = -box + V): G=(L+m^2)^{-1}.
+    Ekranowane significance o skali 1/m (LST + coded model)."""
     inv = 1.0 / (wL + m2)
     return (VL * inv) @ VL.T
 
 
 def effective_mass(wL, VL, xp, T=20.0):
-    """Effective mass per residue from the autocorrelation decay (G(t)~exp(-m t)):
-    m_i = -log( sum_a V_ia^2 e^{-lambda_a T} ) / T. Low mass = slow decay
-    = persistent significance (allosteric channel)."""
+    """Masa efektywna per residue z zaniku autokorelacji (G(t)~exp(-m t)):
+    m_i = -log( sum_a V_ia^2 e^{-lambda_a T} ) / T. Low masa = slow zanik
+    = trwale significance (channel allosteryczny)."""
     p_ret = (VL ** 2) @ xp.exp(-wL * T) # (e^{-LT})_ii
     p_ret = xp.clip(p_ret, 1e-12, None)
     return -xp.log(p_ret) / T
 
 
 def q_quadrature(w, V, xp, T=20.0):
-    """QUADRATURE component (Im of the propagator), analytically:
+    """Component KWADRATUROWA (Im propagatora), analytically:
     <Im U(t)>_ij = sum_a V_ia V_ja <sin(l_a t)> ; <sin(lt)>_[0,T]=(1-cos(lT))/(lT).
-    A new phase channel (so far I had used only Re/interference and |U|^2)."""
+    New channel phase (dotad uzywalismy only Re/interference i |U|^2)."""
     x = w * T
     f = xp.where(xp.abs(x) > 1e-9, (1.0 - xp.cos(x)) / xp.where(xp.abs(x) > 1e-9, x, 1.0), 0.0)
     return (V * f) @ V.T
 
 
 def phase_coherence(w, V, xp, t_star=None):
-    """Phase coherence per residue (phase-locking):
-    R_i = |sum_j U_ij| / sum_j |U_ij|. High = residue i's couplings are
-    consistent in phase (constructive interference); low = scattered/destructive."""
+    """Coherence phase per residue (phase-locking):
+    R_i = |sum_j U_ij| / sum_j |U_ij|. High = sviaenia residues i are
+    consistent w fazie (konstruktywna interference); low = rozproszone/destruktywne."""
     if t_star is None:
         ws = xp.sort(w); gap = float(to_numpy(xp.median(xp.diff(ws))))
         t_star = 1.0 / max(abs(gap), 1e-6)
@@ -185,22 +184,21 @@ def phase_coherence(w, V, xp, t_star=None):
 
 
 def resonance_overlap(w, V, xp, ref_idx, T_max=None, n_times=None, oversample=2.0, gpu=False):
-    """Residue resonance with a reference: mean over time of |<i|e^{-iHt}|ref>|^2
-    (CTQW transition probability from a superposition ref). DENSE time sampling
-    with a step below Nyquist (dt < pi/lambda_max) -> ANTI-ALIASING. Batched over
-    times. NATIVELY a QPU task (SWAP-test / CTQW); classically = a batched complex
-    overlap (as on CUDA).
+    """Resonance residues z reference: mean over time |<i|e^{-iHt}|ref>|^2
+    (CTQW transition prob z superposition ref). GESTE sampling time z krokiem
+    below Nyquista (dt < pi/lambda_max) -> ANTY-ALIASING. Batch over times.
+    NATYWNIE QPU (test SWAP/CTQW); klasycznie = batched complex overlap (as CUDA).
     """
     N = V.shape[0]
     ref = xp.zeros(N, dtype=xp.float64); ref[xp.asarray(ref_idx, dtype=xp.int64)] = 1.0
-    c = (V.T @ ref).astype(xp.complex128) # projection of ref onto the modes
+    c = (V.T @ ref).astype(xp.complex128) # rzut ref in modes
     wmax = float(to_numpy(w).max())
     if T_max is None:
         wpos = to_numpy(w); wpos = wpos[wpos > 1e-9]
-        T_max = float(4.0 * np.pi / wpos.min()) if len(wpos) else 40.0 # several periods of the slowest mode
+        T_max = float(4.0 * np.pi / wpos.min()) if len(wpos) else 40.0 # several okresow najwolniejszego modu
         T_max = min(T_max, 200.0)
     if n_times is None:
-        dt = np.pi / (oversample * (wmax + 1e-9)) # Nyquist with oversampling
+        dt = np.pi / (oversample * (wmax + 1e-9)) # Nyquist z nadsamplingm
         n_times = int(min(2000, max(64, np.ceil(T_max / dt))))
     ts = xp.linspace(0.0, T_max, n_times)
     phases = xp.exp(-1j * xp.outer(ts, w)) # (n_times, N) e^{-i w t}
@@ -209,10 +207,10 @@ def resonance_overlap(w, V, xp, ref_idx, T_max=None, n_times=None, oversample=2.
 
 
 def plv_resonance(w, V, xp, ref_idx, T_max=40.0, n_times=None, oversample=2.0, gpu=False):
-    """PLV (phase-locking value, from TSR-NUFFT): phase stability of the residue's
-    time response psi_i(t)=(U(t)|ref>)_i. PLV_i = |<e^{i arg psi_i(t)}>_t|.
-    High = residue coupled to a single mode (coherent resonance);
-    low = many modes (the phase rotates). Dense sampling (anti-aliasing)."""
+    """PLV (phase-locking value, z TSR-NUFFT): stability phase odpowiedzi
+    timesej residues psi_i(t)=(U(t)|ref>)_i. PLV_i = |<e^{i arg psi_i(t)}>_t|.
+    High = residue sviaona z singlem mode (coherent resonance);
+    low = many modes (phase rotuje). Dense sampling (anti-aliasing)."""
     N = V.shape[0]
     ref = xp.zeros(N, dtype=xp.float64); ref[xp.asarray(ref_idx, dtype=xp.int64)] = 1.0
     c = (V.T @ ref).astype(xp.complex128)
@@ -227,11 +225,11 @@ def plv_resonance(w, V, xp, ref_idx, T_max=40.0, n_times=None, oversample=2.0, g
 
 
 def metric_from_cache(cache, cfg, xp):
-    """Computes a metric from ready eigendata (cache: dict with 'H'->(w,V),
-    'L'->(wL,VL)). Used in experiments.py to avoid repeating the eigendecomposition."""
+    """Computes metryke z readych eigow (cache: dict z 'H'->(w,V), 'L'->(wL,VL)).
+    Uzywane w experiments.py by not powtarzac eigendecomposition."""
     m = cfg.get("metric", "time_avg")
     t_max, n_t, t_star = cfg.get("t_max", 20.0), cfg.get("n_t", 64), cfg.get("t_star")
-    ana = cfg.get("analytic", True) # analytic averaging (fast, default)
+    ana = cfg.get("analytic", True) # analytic umeannie (fast, default)
     w, V = cache["H"]
     if m == "time_avg":
         M = q_ita(w, V, xp) if ana else q_time_avg(w, V, xp, t_max, n_t)
@@ -261,5 +259,5 @@ def metric_from_cache(cache, cfg, xp):
     elif m == "q_communicability":
         wA, VA = cache["H"]; M = q_communicability(wA, VA, xp, cfg.get("beta", 0.5))
     else:
-        raise ValueError(f"unknown metric: {m}")
+        raise ValueError(f"nieznana metric: {m}")
     return to_numpy(M)

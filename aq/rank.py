@@ -1,16 +1,16 @@
 """
 Stage 6 - ranking -> hit-list.
 
-Modes:
-  fluctuation : transfer to residues in the distance band [d_min,d_max]
-  active_site : connectivity to the active site (orthosteric), optionally
-                normalized per graph-distance shell (z-score):
-                a residue is allosteric when it has anomalously high transfer
-                to the active site for its distance -> a hidden channel.
+Tryby:
+  fluctuation : transfer to residues w band distance [d_min,d_max]
+  active_site : connectivity to active site (orthosteric), optionally
+                znormalizowana PER-POWLOKA distance grafowej (z-score):
+                residue jest allosteryczna, when has anomalnie High transfer
+                to active-site as in swoja distance -> ukryty channel.
 
-The per-shell z-score is a proper correction for pocket distality
-(raw connectivity decays with distance and loses distant pockets).
-Shell statistics are computed with a Numba kernel (fast for large N).
+z-score per-powloka jest proper poprawka in dystalnosc pocket
+(surowa connectivity smallje z distancea i gubi dalekie pockety).
+Statystyki powlok liczone kernelem Numba (quickly for largech N).
 """
 from __future__ import annotations
 import numpy as np
@@ -19,7 +19,7 @@ from .backend import njit
 
 @njit(cache=True)
 def _shell_stats(shell, raw, n_shell):
-    """Mean and std of raw within each shell (shell in 0..n_shell-1)."""
+    """meana i odch.std raw w obrebie powlok (shell in 0..n_shell-1)."""
     s = np.zeros(n_shell); s2 = np.zeros(n_shell); cnt = np.zeros(n_shell)
     for i in range(raw.shape[0]):
         k = shell[i]
@@ -48,10 +48,10 @@ def _zscore_by_shell(raw, shell):
 
 
 def smooth_score(score, A, iters=1, beta=0.5):
-    """Smooths the score over the contact graph (label propagation):
-    a residue in a high-scoring cluster is reinforced, an isolated hub
-    is blurred out. An allosteric pocket is a spatial cluster, so this
-    sharpens the peak precision and consolidates the predicted pockets."""
+    """Wygladza score over graph kontaktow (label propagation):
+    residue w klastrze high results zostaje wzmocniona, izolowany hub
+    rozmyty. Allosteric pocket jest spacenym KLASTREM, so this
+    podnosi precyzje szczytu i konsoliduje przewidziane pockety."""
     deg = A.sum(1); deg[deg == 0] = 1.0
     s = score.astype(float).copy()
     for _ in range(int(iters)):
@@ -60,9 +60,9 @@ def smooth_score(score, A, iters=1, beta=0.5):
 
 
 def burial_weight(A, gamma=1.0):
-    """Surface weight: residues with low contact degree (surface)
-    get a larger weight; those buried in the core (high degree) get a smaller one.
-    Druggable allosteric pockets are accessible to the solvent."""
+    """Weight powierzchniowa: residues o niskim degreesu kontaktow (powierzchnia)
+    dostaja wieksza wage; zagrzebane w rdzeniu (high degree) - mniejsza.
+    Druggable allosteric pockets are available for rozpuszczalnika."""
     deg = A.sum(1).astype(float)
     if deg.max() > deg.min():
         d = (deg - deg.min()) / (deg.max() - deg.min())
@@ -103,7 +103,7 @@ def rank_active_site(M, active_idx, gdist=None, normalize="zscore",
     raw = M[:, a].sum(1)
     if normalize in ("zscore", "zabs") and gdist is not None:
         dmin = gdist[:, a]
-        dmin = np.where(np.isfinite(dmin), dmin, -1).min(1) # min dist. to active
+        dmin = np.where(np.isfinite(dmin), dmin, -1).min(1) # min odl. to active
         shell = np.where(dmin >= 0, np.round(dmin).astype(int), -1)
         z = _zscore_by_shell(raw, shell)
         score = np.abs(z) if normalize == "zabs" else z

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-QBoost - quantum tree boosting (QUBO) on ALL features (amplitude+phase).
-"A tree like LGBM, but purely quantum": stumps = nodes, ensemble selection = QUBO -> QPU.
-Leave-one-protein-out + c-Myc. QUBO -> D-Wave anneal / QAOA (here: Aer simulation).
+QBoost - quantum boosting drzew (QUBO) in WSZYSTKICH features (amplitude+phase).
+"Drzewo as LGBM, only quantum": stumps = nodes, selection ensemble = QUBO -> QPU.
+Leave-one-protein-out + c-Myc. QUBO -> D-Wave anneal / QAOA (here: simulation Are).
   python qboost_run.py
 """
 import os, yaml, numpy as np
@@ -45,7 +45,7 @@ def main():
         res = list(ex.map(_worker, [(t, clean) for t in (train+test)]))
     D = {r[0]: (r[1], r[2], r[3], r[4]) for r in res}; names = res[0][5]
     tr = [t["name"] for t in train]
-    print(f"QBoost (quantum boosting, QUBO->QPU) on {len(names)} features\n")
+    print(f"QBoost (quantum boosting, QUBO->QPU) in {len(names)} features\n")
 
     aucs = []
     for these in tr:
@@ -56,9 +56,9 @@ def main():
         feats = Counter(names[st[k][0]] for k in np.where(w > 0.5)[0])
         top = ", ".join(f"{f}({c})" for f, c in feats.most_common(4))
         print(f" test={these:22s} AUC={a:.3f} stumps={int(w.sum())}/{len(st)} features: {top}")
-    print(f"\n mean={np.mean(aucs):.3f}")
+    print(f"\n meana={np.mean(aucs):.3f}")
 
-    # final QBoost from 3 proteins -> c-Myc
+    # final QBoost z 3 proteins -> c-Myc
     Xall = np.vstack([D[n][0] for n in tr]); yall = np.concatenate([D[n][1] for n in tr]).astype(float)
     st, w = _fit(Xall, yall)
     for t in test:
@@ -66,7 +66,7 @@ def main():
         order = np.argsort(-p); keys, resn = D[t["name"]][2], D[t["name"]][3]
         print(f"\n QBoost -> {t['name']} top5: " +
               ", ".join(f"{keys[i][0]}{keys[i][1]}{resn[i]}" for i in order[:5]))
-    print(f"\n (QUBO {len(st)} variables -> D-Wave/QAOA on QPU; here Aer simulation O(K)+Numba)")
+    print(f"\n (QUBO {len(st)} zmiennych -> D-Wave/QAOA on QPU; here simulation Are O(K)+Numba)")
 
 
 if __name__ == "__main__":

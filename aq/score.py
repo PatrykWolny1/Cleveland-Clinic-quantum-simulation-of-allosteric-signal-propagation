@@ -1,14 +1,14 @@
 """
-Stage 7 - evaluation harness (shared across ALL configurations).
+Stage 7 - harness oceny (shared for WSZYSTKICH konfiguracji).
 
-Goal of the main challenge: the algorithm must assign significantly higher
-scores to the known regulatory residues (holo pocket) than to the background.
+Cel main challenge'u: algorytm has przypisywac istotnie wyzsze results
+znanym resztom regulatorowym (pocket holo) niz tlu.
 
-Metrics:
-  roc_auc : whether the ranking separates pocket from background (0.5 = random)
-  mwu_p : Mann-Whitney U test, p-value (pocket > background?)
-  hit@k : whether any pocket residue landed in the top-k
-  enrichment@k : (fraction of pocket in top-k) / (baseline fraction)
+Metryki:
+  roc_auc : whether ranking odroznia pocket from residues (0.5 = losowo)
+  mwu_p : test Manna-Whitneya, p-value (pocket > tlo ?)
+  hit@k : whether jakas residue pocket trafila w top-k
+  enrichment@k : (frakcja pocket w top-k) / (frakcja bazowa)
 """
 from __future__ import annotations
 import numpy as np
@@ -16,7 +16,7 @@ from scipy.stats import mannwhitneyu
 
 
 def roc_auc(score, labels):
-    """AUC = P(score_pos > score_neg). Equivalent to the U statistic."""
+    """AUC = P(score_pos > score_neg). Rownowaznik statystyki U."""
     labels = np.asarray(labels)
     pos = score[labels == 1]
     neg = score[labels == 0]
@@ -25,7 +25,7 @@ def roc_auc(score, labels):
     order = np.argsort(score)
     ranks = np.empty(len(score), float)
     ranks[order] = np.arange(1, len(score) + 1)
-    # average the ranks over ties
+    # umeannie rang at remisach
     _tie_correct(score, ranks)
     r_pos = ranks[labels == 1].sum()
     n1, n0 = len(pos), len(neg)
@@ -54,7 +54,7 @@ def evaluate(score, order, labels, ks=(5, 10, 20)):
     n_pos = int(labels.sum())
     res = {"n_nodes": n, "n_pocket": n_pos}
     if n_pos == 0:
-        res["note"] = "no ground-truth (e.g. c-Myc without holo) - hit-list only"
+        res["note"] = "none ground-truth (np. c-Myc without holo) - only hit-list"
         return res
 
     res["roc_auc"] = round(roc_auc(np.asarray(score, float), labels), 4)

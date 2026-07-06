@@ -1,18 +1,18 @@
 """
-Sampling mechanism (from the coded model / path integrals).
+Mechanism sampling (z coded model / calki over trajektoriach).
 
-Stochastic estimation of the connectivity M = f(H) WITHOUT eigendecomposition:
-  - Gaussian probes xi ~ N(0,1) (measure mu_code),
-  - f(H) xi via Chebyshev expansion (only matrix-vector products),
+Stochastyczna estymacja connectivity M = f(H) BEZ eigendecomposition:
+  - probes gaussowskie xi ~ N(0,1) (miara mu_code),
+  - f(H) xi via rozwiniecie Czebyszewa (only mnozenia matrix-wektor),
   - M_ij ~ (1/R) sum_r (f(H)xi_r)_i (xi_r)_j [Hutchinson].
-Cost: O(edges * K * R) instead of O(N^3) eig -> scales to large N, GPU-friendly.
+Cost: O(edges * K * R) instead of O(N^3) eig -> skaluje to largech N, GPU-friendly.
 """
 from __future__ import annotations
 import numpy as np
 
 
 def _cheb_coeffs(fn, K, a, b, M=200):
-    """Chebyshev coefficients of f on [a,b] (quadrature)."""
+    """Wspolczynniki Czebyszewa f in [a,b] (quadrature)."""
     k = np.arange(M)
     x = np.cos(np.pi * (k + 0.5) / M) # nodes
     lam = 0.5 * (b - a) * x + 0.5 * (a + b)
@@ -25,8 +25,8 @@ def _cheb_coeffs(fn, K, a, b, M=200):
 
 
 def apply_spectral(A, Vp, fn, a, b, K=40, gpu=False):
-    """Applies f(L) to the columns of Vp via Chebyshev (sparse matvec). L=D-A.
-    gpu=True -> cupyx.scipy.sparse on GPU (sparse matvec, GPU-friendly)."""
+    """Stosuje f(L) to kolumn Vp via Czebyszew (matvec rzadkie). L=D-A.
+    gpu=True -> cupyx.scipy.sparse in GPU (macvec rzadki przyjazny karcie)."""
     deg = A.sum(1)
     Ldense = np.diag(deg) - A
     if gpu:
@@ -53,10 +53,10 @@ def apply_spectral(A, Vp, fn, a, b, K=40, gpu=False):
 
 
 def stochastic_connectivity(A, fn, R=None, K=40, seed=0, gpu=False):
-    """Estimates M = f(L) by sampling. R=None -> adaptive (~sqrt(N))."""
+    """Estymuje M = f(L) samplingm. R=None -> adaptacyjne (~sqrt(N))."""
     n = A.shape[0]
     if R is None:
-        R = int(min(400, max(40, 6 * np.sqrt(n)))) # adaptive to accuracy
+        R = int(min(400, max(40, 6 * np.sqrt(n)))) # adaptacyjne under accuracy
     b = 2.0 * A.sum(1).max()
     rng = np.random.default_rng(seed)
     Xi = rng.standard_normal((n, R))
@@ -65,7 +65,7 @@ def stochastic_connectivity(A, fn, R=None, K=40, seed=0, gpu=False):
 
 
 def stochastic_rowsum(A, fn, K=40):
-    """Deterministic row-sum f(L)1 (single matvec) - exact, O(edges*K)."""
+    """Deterministyczny row-sum f(L)1 (one macvec) - exact, O(edges*K)."""
     n = A.shape[0]
     b = 2.0 * A.sum(1).max()
     ones = np.ones((n, 1))

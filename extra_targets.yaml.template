@@ -1,10 +1,10 @@
-# ASD / additional apo-holo pairs (optional).
-# 1) drop in the files: pdb_clean/<apo>.pdb, pdb_clean/<holo>.pdb, pdb_raw/<ID>.pdb
-#    (ID = the name prefix before the first '_', e.g. 3ABC_Name -> pdb_raw/3ABC.pdb)
-# 2) rename to extra_targets.yaml
-# 3) final_run.py will pull them in automatically (routing + importance + matrices + top5)
+# ASD / dodatkowe pary apo-holo (opcjonalne).
+# 1) wrzuc pliki: pdb_clean/<apo>.pdb, pdb_clean/<holo>.pdb, pdb_raw/<ID>.pdb
+#    (ID = prefiks nazwy przed pierwszym '_', np. 3ABC_Nazwa -> pdb_raw/3ABC.pdb)
+# 2) zmien nazwe na extra_targets.yaml
+# 3) final_run.py automatycznie je wciagnie (routing + istotnosc + macierze + top5)
 targets:
-  - name: 3ABC_Proximal_Protein
+  - name: 3ABC_Bialko_Proksymalne
     apo: 3ABC_apo.pdb
     holo: 4DEF_ligand_holo.pdb
     ligand: null

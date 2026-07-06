@@ -1,14 +1,14 @@
 """
-Noise resilience (secondary objective + near-term hardware credibility).
+Noise resilience (cel drugorzedny + wiarygodnosc near-term hardware).
 
-Three noise sources:
-  1) DECOHERENCE (dephasing) - physically: damping of interference.
-     The spectral filter interpolates sinc(lT) [coherent] -> heat(lT) [classical]:
+Three source noise:
+  1) DEKOHERENCJA (dephasing) - fizycznie: tlumienie interference.
+     Spectral filter interpoluje sinc(lT) [coherent] -> heat(lT) [classical]:
        f_p(l) = (1-p) sinc(lT) + p (1-e^{-lT})/(lT)
-     p=0 full quantum interference, p=1 full classical diffusion.
-  2) STRUCTURAL NOISE - perturbation of coordinates (input uncertainty).
-  3) MEASUREMENT NOISE (shots) - estimating |U|^2 from a finite number of samples.
-Metric: detector AUC as a function of noise strength (gentle decline = resilience).
+     p=0 full interference quantum, p=1 full dyfusion classical.
+  2) SZUM STRUKTURALNY - perturbation coordinates (uncertainty input).
+  3) SZUM POMIAROWY (shots) - estymacja |U|^2 skonczona number samples.
+Miara: AUC detector w funkcji sily noise (gentle decline = resilience).
 """
 from __future__ import annotations
 import numpy as np

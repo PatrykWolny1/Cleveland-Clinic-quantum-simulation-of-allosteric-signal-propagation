@@ -72,27 +72,6 @@ def noisy_probs(qc, p_depol=0.01, shots=4096):
     return probs/s if s > 0 else probs
 
 
-def resources_hw(qc, basis=("cx", "rz", "sx", "x")):
-    """Resources native AND after transpile to a hardware basis (cx/rz/sx/x).
-    CX count and basis depth are the honest near-term-hardware numbers."""
-    from qiskit import transpile
-    op = qc.count_ops()
-    nat = {"qubits": qc.num_qubits, "depth": qc.depth(),
-           "1q": op.get("rx", 0)+op.get("ry", 0)+op.get("x", 0),
-           "2q": op.get("rxx", 0)+op.get("ryy", 0)}
-    tq = transpile(qc, basis_gates=list(basis), optimization_level=2)
-    opb = tq.count_ops()
-    hw = {"depth": tq.depth(), "cx": opb.get("cx", 0),
-          "1q": sum(opb.get(g, 0) for g in ("rz", "sx", "x")), "total": sum(opb.values())}
-    return nat, hw
-
-
-def estimated_fidelity(n_cx, n_1q, e2=0.005, e1=0.0003):
-    """Rough surviving circuit fidelity from per-gate error rates (IBM-class):
-    F ~ (1-e2)^{#CX} (1-e1)^{#1q}. e2=0.5% 2q, e1=0.03% 1q are typical."""
-    return float((1.0 - e2) ** n_cx * (1.0 - e1) ** n_1q)
-
-
 def resources(qc):
     from qiskit import transpile
     from qiskit_aer import AerSimulator

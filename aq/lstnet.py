@@ -1,23 +1,23 @@
 """
-LST-QNN: a neural network built from LST mechanisms.
+LST-QNN: siec neural zbudowana z mechanismow LST.
 
-The feature layer = four LST mechanisms at once (physics, not a generic ansatz):
-  Threshold : tau graph (knn, fixed k) - axiom 11
-  RESONANCE : log-f significance of width sigma - eq. 18
+Warstwa features = four mechanismy LST naraz (fizyka, not generyczny ansatz):
+  Threshold : graph tau (knn, stale k) - aksjomat 11
+  REZONANS : significance log-f o szerokosci sigma - rown. 18
   Superposition: propagation e^{-iH(sigma)t} (quantum walk)
-  INTERFERENCE: signed readout M=V sinc(lambda T) V^T - eq. 10
-Feature bank: interference on a (sigma, T) grid -> a multi-scale LST signal.
-Head: convex (quantum kernel / logistic) -> no barren plateau,
-few physically interpretable parameters.
+  INTERFERENCJA: odczyt that signiem M=V sinc(lambda T) V^T - rown. 10
+Bank cech: interference w siatce (sigma, T) -> wieloskalowy sygnal LST.
+Glowica: wypukla (quantum kernel / logistic) -> None barren plateau,
+few fizycznie interpretowalnych parametrow.
 """
 from __future__ import annotations
 import numpy as np
 from . import graph, propagate
 from .backend import to_numpy, get_backend
 
-SIGMAS = (0.5, 1.0, 2.0) # resonance widths (log-f)
-TIMES = (10.0, 40.0) # interference times
-K_TAU = 10 # threshold tau: fixed number of neighbors
+SIGMAS = (0.5, 1.0, 2.0) # szerokosci resonance (log-f)
+TIMES = (10.0, 40.0) # times interference
+K_TAU = 10 # threshold tau: stala number neighbors
 
 
 def _band(M, gd, d_min=3):
@@ -28,29 +28,29 @@ def _band(M, gd, d_min=3):
 
 def lst_features(coords, gpu=False, mode="combined"):
     """Returns (X[N,F], gd). mode: 'lst' (only interference) |
-    'combined' (4 LST mechanisms + transferable structural features)."""
+    'combined' (4 mechanismy LST + features structurelne transferowalne)."""
     A = graph.build_graph(coords, "knn", k=K_TAU) # Threshold tau
     gd = graph.graph_distance(A)
     xp, _ = get_backend(gpu)
     feats, names = [], []
-    for sig in SIGMAS: # RESONANCE (sigma)
+    for sig in SIGMAS: # REZONANS (sigma)
         H = graph.Hamiltonian(A, "logf", sigma=sig)
         w, V, _, _ = propagate.eig(H, gpu) # Superposition
-        for T in TIMES: # INTERFERENCE (sign)
+        for T in TIMES: # INTERFERENCJA (sign)
             feats.append(_band(to_numpy(propagate.q_interference(w, V, xp, T)), gd))
             names.append(f"interf_s{sig}_T{int(T)}")
         if mode == "combined": # Superposition: coherent walk
             feats.append(_band(to_numpy(propagate.q_coherent(w, V, xp, None)), gd))
             names.append(f"coh_s{sig}")
     if mode == "combined":
-        # coded model (main_EN): massive propagator (Yukawa) + effective mass
+        # coded model (main_EN): propagator masywny (Yukawa) + masa efektywna
         Lp = graph.Hamiltonian(A, "laplacian")
         wL, VL, _, _ = propagate.eig(Lp, gpu)
         feats.append(_band(to_numpy(propagate.yukawa(wL, VL, xp, 0.5)), gd)); names.append("yukawa")
         feats.append(to_numpy(propagate.effective_mass(wL, VL, xp, 20.0))); names.append("eff_mass")
-        # RESONANCE: log-f coupling strength (row-sum weights)
+        # REZONANS: sila sviaenia log-f (row-sum weights)
         feats.append(graph.logf_weights(A, 1.0).sum(1)); names.append("resonance")
-        # structural features (transferable between proteins)
+        # features structurelne (transferowalne between proteins)
         feats.append(A.sum(1)); names.append("degree")
         feats.append(np.array([np.mean(gd[i][np.isfinite(gd[i])]) for i in range(len(A))]))
         names.append("centrality")

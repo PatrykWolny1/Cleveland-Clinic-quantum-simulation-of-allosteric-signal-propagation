@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Orchestrator (single configuration from config.yaml).
-  python run.py [target_name ...]
-To sweep over variants use experiments.py (with cached eigendecomposition).
+Orchestrator (single konfiguracja z config.yaml).
+  python run.py [nazwa_targetu ...]
+To przemiatania wariantow uzyj experiments.py (z cache eigendecomposition).
 """
 from __future__ import annotations
 import os, sys, time, yaml
@@ -62,7 +62,7 @@ def run_target(tgt, cfg):
             row["n_active"] = len(active_idx)
         else:
             order, sc = rank.rank_fluctuation(M, gd, rk.get("d_min", 3), rk.get("d_max"), **_rk)
-            row["note"] = "no active-site -> fallback fluctuation"
+            row["note"] = "none active-site -> fallback fluctuation"
     else:
         order, sc = rank.rank_fluctuation(M, gd, rk.get("d_min", 3), rk.get("d_max"),
                                           A=A, smooth=rk.get("smooth", 0),
@@ -76,7 +76,7 @@ def run_target(tgt, cfg):
         row.update(score.evaluate(sc, order, labels, tuple(cfg["scoring"]["ks"])))
         row["ligand"] = lig
     else:
-        row["note"] = "no holo - hit-list only"
+        row["note"] = "none holo - only hit-list"
     row["sec"] = round(time.time() - t0, 2)
     report.save_target(outdir, name, M, hits, apo.keys)
     return row, hits

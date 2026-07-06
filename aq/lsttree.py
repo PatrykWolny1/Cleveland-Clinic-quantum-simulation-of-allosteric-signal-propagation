@@ -1,14 +1,14 @@
 """
-LST tree: symbolic regression with physics primitives (instead of generic ones).
+Drzewo LST: symbolic regression z prymitywami fizyki (instead of generycznych).
 
-The function set = LST mechanisms:
-  sin_log(x) = sin(log|x|) - RESONANCE (log) + INTERFERENCE (sin)
-  thr(x) = sigmoid(k x) - threshold on amplitude/phase
-  interf(x,y)= cos(x - y) - INTERFERENCE of two signals (phase difference)
-  reso(x,y) = exp(-(x-y)^2) - RESONANCE (proximity -> significance)
-  + add, sub, mul (superposition)
-Input: amplitude and phase channels (interf, quadrature, phase_coh, gauge).
-Fit: directly on AUC (not MAE) -> the tree learns to discriminate, not to guess.
+Zestaw funkcji = mechanismy LST:
+  sin_log(x) = sin(log|x|) - REZONANS (log) + INTERFERENCJA (sin)
+  thr(x) = sigmoid(k x) - Threshold amplitudes/phase
+  interf(x,y)= cos(x - y) - INTERFERENCJA dwoch sygnalow (difference faz)
+  reso(x,y) = exp(-(x-y)^2) - REZONANS (proximity -> significance)
+  + add, sub, mul (Superposition)
+Input: channels amplitude I phase (interf, quadrature, phase_coh, gauge).
+Fit: wprost AUC (not MAE) -> drzewo learns rozrozniac, not zgadywac.
 """
 from __future__ import annotations
 import numpy as np
@@ -41,7 +41,7 @@ def _auc_fitness():
 
 
 def fit_predict(Xtr, ytr, Xte, feature_names=None, gens=20, pop=1500, seed=0):
-    """Returns (te_prediction, formula_str) or (None, None) if gplearn is missing."""
+    """Returns (predykcja_te, wzor_str) or (None,None) when none gplearn."""
     try:
         from gplearn.genetic import SymbolicRegressor
     except Exception:
@@ -52,6 +52,6 @@ def fit_predict(Xtr, ytr, Xte, feature_names=None, gens=20, pop=1500, seed=0):
         metric=_auc_fitness(), parsimony_coefficient=0.0008,
         p_crossover=0.7, p_subtree_mutation=0.12, p_hoist_mutation=0.05,
         p_point_mutation=0.1, max_samples=0.9, random_state=seed,
-        n_jobs=-1, feature_names=feature_names) # n_jobs=-1: multiprocessing (CPU)
+        n_jobs=-1, feature_names=feature_names) # n_jobs=-1: MP (CPU)
     est.fit(Xtr, ytr)
     return est.predict(Xte), str(est._program)

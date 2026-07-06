@@ -1,14 +1,14 @@
 """
-Spectral operator built directly from the data matrix (not from features).
+Operator spectral wprost z Matrix Data (not z cech).
 
-INPUT = the apo structural Laplacian L = D - A (data matrix).
-A representation comparable across proteins of different sizes = the SPECTRUM of L:
-  modal participation P[i,b] = sum_{a: lambda_a in band b} |v_a(i)|^2
-  (how much residue i "lives" in frequency band b; lambda normalized to [0,1]).
-Operator: P W = y -> W = P^+ y = spectral filter g(lambda) = the LAW.
-g(lambda) is shared across proteins (the same bands) -> it generalizes to a new case.
+INPUT = Laplacian structure apo L = D - A (matrix data).
+Representation porownywalna between proteins roznej wielkosci = WIDMO L:
+  udzial modalny P[i,b] = sum_{a: lambda_a in band b} |v_a(i)|^2
+  (ile residue i "zyje" w band czestotliwosci b; lambda znormalizowana [0,1]).
+Operator: P W = y -> W = P^+ y = spectral filter g(lambda) = PRAWO.
+g(lambda) jest shared for proteins (these same band) -> generalizuje in 4. case.
 
-Closed-form (ridge/pinv) -> fast; a single eig per protein (spectrum of the data matrix).
+Forma closed-form (ridge/pinv) -> quickly; one eig in protein (spectrum matrix data).
 """
 from __future__ import annotations
 import numpy as np
@@ -19,12 +19,12 @@ N_BINS = 20
 
 
 def modal_participation(coords, n_bins=N_BINS, k=10, gpu=False):
-    """P [N x n_bins] from the spectrum of the apo Laplacian (data matrix)."""
+    """P [N x n_bins] z spectrum Laplacianu apo (matrix data)."""
     A = graph.build_graph(coords, "knn", k=k)
     L = graph.Hamiltonian(A, "laplacian")
     w, V, _, _ = propagate.eig(L, gpu)
     w = to_numpy(w); V = to_numpy(V)
-    ln = (w - w.min()) / (w.max() - w.min() + 1e-12) # normalized bands
+    ln = (w - w.min()) / (w.max() - w.min() + 1e-12) # znormalizowane band
     P = np.zeros((V.shape[0], n_bins))
     edges = np.linspace(0.0, 1.0, n_bins + 1)
     for b in range(n_bins):

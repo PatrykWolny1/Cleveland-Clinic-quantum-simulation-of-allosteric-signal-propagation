@@ -1,12 +1,12 @@
 """
-Law discovery via ML/AI methods (stronger than linear STLSQ).
+Odkrywanie prawa metodami ML/AI (mocniej niz linear STLSQ).
 
-  1) Gradient Boosting (sklearn) - a nonlinear model with feature importances.
-  2) Genetic symbolic regression (gplearn) - EVOLUTIONARY search over
-     expression trees -> an actual FORMULA (true "AI equation discovery").
-rank_gauss space (distribution equalization), leave-one-protein-out evaluation.
-Class weights (pockets are rare). ML runs on CPU (light: 3 proteins) - the
-numeric core (eig/kernels) still runs under MP/GPU.
+  1) Gradient Boosting (sklearn) - model nonlinear, importance cech.
+  2) Genetyczna symbolic regression (gplearn) - EWOLUCYJNE przeszukiwanie
+     drzew wyrazen -> faktyczny WZOR (true "AI odkrywanie rownania").
+Space rank_gauss (wyrownanie distributions), ocena leave-one-protein-out.
+Weights klas (pockets rzadkie). ML in CPU (light: 3 protein) - core liczbowy
+(eig/jadra) dalej under MP/GPU.
 """
 from __future__ import annotations
 import numpy as np
@@ -26,7 +26,7 @@ def gb_fit_predict(Xtr, ytr, Xte, seed=0):
 
 
 def symbolic_fit_predict(Xtr, ytr, Xte, seed=0, gens=12, pop=800, feature_names=None):
-    """gplearn SymbolicRegressor -> (prediction, formula_str). None if gplearn is missing."""
+    """gplearn SymbolicRegressor -> (prediction, wzor_str). None if none gplearn."""
     try:
         from gplearn.genetic import SymbolicRegressor
     except Exception:

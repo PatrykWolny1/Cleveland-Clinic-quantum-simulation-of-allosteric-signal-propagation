@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-3D visualization: write the allosteric score (LST) into the B-factor column of the
-apo structure. Open in PyMOL/ChimeraX and color: `spectrum b` -> heat map of the pocket.
-Also saves {name}_allosteric.pml (a PyMOL script that highlights the top-5).
+Visualization 3D: save oceny allosterycznej (LST) w column B-factor structure
+apo. Otworz w PyMOL/ChimeraX i pokoloruj: `spectrum b` -> heat map pocket.
+Saves also {name}_allosteric.pml (script PyMOL z podswietleniem top-5).
   python viz_run.py
-Optimization: analytic metric, multiprocessing over proteins, GPU eig under use_gpu.
+Optimization: metric analytically, MP over proteins, GPU eig under use_gpu.
 """
 import os, yaml, numpy as np
 from concurrent.futures import ProcessPoolExecutor
@@ -34,7 +34,7 @@ def _worker(arg):
     b = np.where(np.isfinite(b), b, 0.0)
     key2b = {(apo.keys[i][0], int(apo.keys[i][1])): float(b[i]) for i in range(len(apo.keys))}
     top5 = [apo.keys[i] for i in np.argsort(-np.where(np.isfinite(s), s, -np.inf))[:5]]
-    # rewrite the apo PDB with B-factor = score
+    # przepisz apo PDB z B-factor = ocena
     src = os.path.join(clean, t["apo"]); dst = os.path.join(out, f"{t['name']}_allosteric.pdb")
     with open(src) as f, open(dst, "w") as g:
         for ln in f:
@@ -46,7 +46,7 @@ def _worker(arg):
                     val = 0.0
                 ln = ln[:60] + f"{val:6.2f}" + ln[66:]
             g.write(ln)
-    # PyMOL script
+    # script PyMOL
     sel = " or ".join(f"(chain {k[0]} and resi {k[1]})" for k in top5)
     pml = os.path.join(out, f"{t['name']}_allosteric.pml")
     with open(pml, "w") as g:
@@ -62,8 +62,8 @@ def main():
     T = yaml.safe_load(open(os.path.join(ROOT, "targets.yaml")))["targets"]
     with ProcessPoolExecutor(max_workers=CFG.get("backend", {}).get("n_workers", 3)) as ex:
         for name, dst, top5 in ex.map(_worker, [(t, clean, raw, out) for t in T]):
-            print(f" {name:22s} -> {os.path.basename(dst)} (B-factor=score; top5: {', '.join(top5)})")
-    print(f"\nOpen in PyMOL: `pymol {out}/<name>_allosteric.pml` (heat map + top5)")
+            print(f" {name:22s} -> {os.path.basename(dst)} (B-factor=ocena; top5: {', '.join(top5)})")
+    print(f"\nOtworz w PyMOL: `pymol {out}/<name>_allosteric.pml` (heat map + top5)")
     print(f"or ChimeraX: open <name>_allosteric.pdb; color byattribute bfactor")
 
 

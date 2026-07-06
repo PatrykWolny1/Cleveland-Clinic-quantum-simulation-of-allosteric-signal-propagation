@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-LST tree (symbolic, with sin_log/thr/interf/reso primitives, fitness=AUC)
-over ALL features (amplitude + phase), leave-one-protein-out + c-Myc.
+Drzewo LST (symboliczna z prymitywami sin_log/thr/interf/reso, fitness=AUC)
+in WSZYSTKICH features (amplitude + phase), leave-one-protein-out + c-Myc.
   python lsttree_run.py (requires: pip install gplearn)
 """
 import os, yaml, numpy as np
@@ -35,7 +35,7 @@ def main():
         res = list(ex.map(_worker, [(t, clean) for t in (train+test)]))
     D = {r[0]: (r[1], r[2], r[3], r[4]) for r in res}; names = res[0][5]
     tr = [t["name"] for t in train]
-    print(f"LST tree leave-one-protein-out (sin_log/thr/interf/reso, fitness=AUC)\n")
+    print(f"Drzewo LST leave-one-protein-out (sin_log/thr/interf/reso, fitness=AUC)\n")
 
     aucs = []
     for these in tr:
@@ -46,17 +46,17 @@ def main():
             print(" gplearn none: pip install gplearn"); return
         a = auc(p, D[these][1]); aucs.append(a)
         print(f" test={these:22s} AUC={a:.3f}")
-        print(f" tree: {form}")
-    print(f"\n mean={np.mean(aucs):.3f}")
+        print(f" drzewo: {form}")
+    print(f"\n meana={np.mean(aucs):.3f}")
 
-    # final tree from 3 proteins -> c-Myc
+    # final drzewo z 3 proteins -> c-Myc
     Xall = np.vstack([D[n][0] for n in tr]); yall = np.concatenate([D[n][1] for n in tr]).astype(float)
     for t in test:
         p, form = lsttree.fit_predict(Xall, yall, D[t["name"]][0], feature_names=names, gens=20, pop=2000)
         order = np.argsort(-p); keys, resn = D[t["name"]][2], D[t["name"]][3]
-        print(f"\n tree -> {t['name']} top5: " +
+        print(f"\n drzewo -> {t['name']} top5: " +
               ", ".join(f"{keys[i][0]}{keys[i][1]}{resn[i]}" for i in order[:5]))
-        print(f" tree: {form}")
+        print(f" drzewo: {form}")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-EML: for each protein a symbolic formula from the spectral data matrix, then
-a law over the parameters (multi-task pooled) + leave-one-protein-out + c-Myc.
+EML: for each protein formula symboliczna z spectrum matrix data, then
+prawo parametrow (multi-task pooled) + leave-one-protein-out + c-Myc.
   python eml_run.py
 """
 import os, yaml, numpy as np
@@ -39,26 +39,26 @@ def main():
     terms = res[0][5]
     names = [t["name"] for t in train]
 
-    # LAW: multi-task (pooled) formula from 3 proteins
+    # PRAWO: multi-task (pooled) formula z 3 proteins
     Phi_all = np.vstack([D[n][0] for n in names])
     y_all = np.concatenate([D[n][1] for n in names]).astype(float)
     c_all = eml.stlsq(Phi_all, y_all, thresh=THRESH)
-    print("LAW (pooled EML, shared formula):")
+    print("PRAWO (pooled EML, shared formula):")
     print(" y ~ " + eml.formula_str(c_all, terms, top=8))
 
-    # per-protein formulas (same form, different parameters?)
-    print("\nPer-protein formulas (to compare parameters):")
+    # per-protein formuly (this sama forma, different parametry?)
+    print("\nFormuly per-protein (to comparison parametrow):")
     cs = {}
     for n in names:
         cs[n] = eml.stlsq(D[n][0], D[n][1].astype(float), thresh=THRESH)
         print(f" {n[:20]:20s}: {eml.formula_str(cs[n], terms, top=4)}")
-    # which terms are shared across all (core of the law)
+    # which terms shared for all (core prawa)
     active = [set(np.where(np.abs(cs[n]) > 1e-6)[0]) for n in names]
     common = set.intersection(*active) if active else set()
-    print(" terms shared across ALL: " + (", ".join(terms[i] for i in common) if common else "none"))
+    print(" terms shared for WSZYSTKICH: " + (", ".join(terms[i] for i in common) if common else "none"))
 
     # leave-one-protein-out
-    print("\nLeave-one-protein-out (formula from 2 proteins -> 3rd):")
+    print("\nLeave-one-protein-out (formula z 2 par -> 3.):")
     aucs = []
     for these in names:
         Phitr = np.vstack([D[n][0] for n in names if n != these])
@@ -66,14 +66,14 @@ def main():
         ct = eml.stlsq(Phitr, ytr, thresh=THRESH)
         a = auc(D[these][0] @ ct, D[these][1]); aucs.append(a)
         print(f" test={these:22s} AUC={a:.3f}")
-    print(f" mean={np.mean(aucs):.3f}")
+    print(f" meana={np.mean(aucs):.3f}")
 
-    # c-Myc via the shared law
+    # c-Myc wspolnym prawem
     for t in test:
         Phi, _, keys, resn = D[t["name"]]
         p = Phi @ c_all; order = np.argsort(-p)
         top = ", ".join(f"{keys[i][0]}{keys[i][1]}{resn[i]}" for i in order[:5])
-        print(f"\n EML law -> {t['name']} top5: {top}")
+        print(f"\n EML prawo -> {t['name']} top5: {top}")
 
 
 if __name__ == "__main__":

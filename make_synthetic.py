@@ -1,10 +1,9 @@
-"""Synthetic target for testing the Phase I plumbing.
+"""Syntetyczny target to testu plumbingu Phase I.
 
-Construction: core (active site) -- channel -- distal pocket +
-scattered surface residues. In the holo the ligand sits at the pocket,
-so the ground truth = pocket residues. The channel connects the pocket to
-the core, so the quantum transfer should distinguish the pocket from the
-scattered background.
+Konstrukcja: core (active site) -- channel -- distal pocket +
+rozproszone residues powierzchniowe. W holo ligand siedzi at pocket,
+so ground-truth = residues pocket. Channel combines pocket z rdzeniem, so
+quantum transfer should wyroznic pocket above rozproszone tlo.
 """
 import os
 import numpy as np
@@ -20,14 +19,14 @@ def cluster(center, n, spread):
 
 
 core = cluster([0, 0, 0], 20, 2.2) # active site
-channel = np.array([[3.0 + 3.4 * k, 0, 0] for k in range(12)]) # bridge
+channel = np.array([[3.0 + 3.4 * k, 0, 0] for k in range(12)]) # most
 channel += np.random.randn(*channel.shape) * 0.4
 pocket = cluster([3.0 + 3.4 * 12 + 4, 0, 0], 14, 2.2) # distal pocket
-surface = cluster([0, 0, 0], 20, 12.0) # scattered background
+surface = cluster([0, 0, 0], 20, 12.0) # rozproszone tlo
 
 coords = np.vstack([core, channel, pocket, surface])
 N = len(coords)
-# segment labels (used to generate the ligand at the pocket)
+# labels segmentow (to wygenerowania ligandu at pocket)
 pocket_lo = len(core) + len(channel)
 pocket_hi = pocket_lo + len(pocket)
 pocket_centroid = coords[pocket_lo:pocket_hi].mean(0)
@@ -45,9 +44,9 @@ def write_pdb(path, xyz, ligand_xyz=None):
         f.write("END\n")
 
 
-# apo: nodes only
+# apo: same nodes
 write_pdb(os.path.join(OUT, "SYN_apo.pdb"), coords)
-# holo: the same coordinates + a small ligand at the pocket
+# holo: these same coordinates + small ligand at pocket
 lig = pocket_centroid + np.random.randn(6, 3) * 1.2
 write_pdb(os.path.join(OUT, "SYN_holo.pdb"), coords, lig)
 

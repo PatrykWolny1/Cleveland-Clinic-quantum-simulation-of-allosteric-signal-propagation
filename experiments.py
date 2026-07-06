@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Variant sweep + CONSENSUS, with an eigendecomposition cache.
+Przemiatanie wariantow + KONSENSUS, z cache eigendecomposition.
 
-Optimization: eig(H)/eig(L) is computed once per (chain, graph, H) signature and
-reused across all metrics (here classical gnm/resistance uses eig(L)).
-Parallelism runs over targets; on GPU it runs sequentially.
+Optimization: eig(H)/eig(L) liczone once in sygnature (chain,graf,H) i
+reuzywane via all metric (w this classical gnm/resistance z eig(L)).
+Rownoleglosc over targets; in GPU sekwencyjnie.
 
   python experiments.py
 """
@@ -41,7 +41,7 @@ EXPERIMENTS = [
                           "ranking": {"mode": "active_site", "normalize": "zabs",
                                       "d_min": 3, "d_max": 8}}),
     ("C_yukawa_band", {"metric": {"metric": "yukawa", "m2": 0.5}, "ranking": dict(BAND)}),
-    # --- LST components (user documents) ---
+    # --- skladniki LST (dokumenty user's) ---
     ("LST_interference", {"metric": {"metric": "interference"}, "ranking": dict(BAND)}),
     ("LST_logf_coherent",{"Hamiltonian": {"variant": "logf", "params": {"sigma": 1.0}},
                           "metric": {"metric": "coherent"}, "ranking": dict(BAND)}),
@@ -56,7 +56,7 @@ EXPERIMENTS = [
     ("C_resistance_prox",{"metric": {"metric": "resistance"},
                           "ranking": {"mode": "active_site", "normalize": "none",
                                       "d_min": 3, "d_max": 8}}),
-    # --- active-site: proximal (KRAS) / two-sided / distal ---
+    # --- active-site: proximal (KRAS) / dwustronny / distal ---
     ("A_active_proximal",{"metric": {"metric": "time_avg"},
                           "ranking": {"mode": "active_site", "normalize": "none",
                                       "d_min": 3, "d_max": 8}}),
@@ -67,9 +67,9 @@ EXPERIMENTS = [
                           "ranking": {"mode": "active_site", "normalize": "zscore",
                                       "d_min": 3, "d_max": 8}}),
 ]
-# consensus of complementary detectors (distal quantum + proximal + all-paths)
-# strong, complementary members (no leakage): quantum distal +
-# classical-limit distal + two-sided anomalous (KRAS). Best-of aggregation.
+# consensus komplementarnych detectors (distal kwant + proximal + all-paths)
+# silni, komplementarni czlonkowie (without przeciekow): kwant distal +
+# classical limit distal + dwustronny anomalny (KRAS). Agregacja best-of.
 CONSENSUS_SET = ["LST_logf_interf", "LST_logf_coherent", "A_active_zabs", "Q_communic_band"]
 
 
@@ -88,7 +88,7 @@ def _gsig(cfg):
 def process_target(tgt, base_cfg, exps):
     clean = os.path.join(ROOT, base_cfg["paths"]["pdb_clean"])
     rawdir = os.path.join(ROOT, base_cfg["paths"].get("pdb_raw", "pdb_raw"))
-    # GPU auto: large N -> GPU, small -> CPU (lower overhead)
+    # GPU auto: large N -> GPU, small -> CPU (mniejszy narzut)
     bk = base_cfg["backend"]
     rows, orders = [], {}
     labels = None; n_nodes = 0; apo_ref = None; cons_orders = {}; has_active = False
@@ -108,9 +108,9 @@ def process_target(tgt, base_cfg, exps):
         A = graph.build_graph(apo.coords, gsig[1], **dict(gsig[2]))
         L = graph.Hamiltonian(A, "laplacian")
         gd = graph.graph_distance(A)
-        # eig once per role: L always; A lazily
+        # eig once in role: L always; A leniwie
         wL, VL, xp, bname = propagate.eig(L, gpu)
-        eigL = (wL, VL); eig_ham = {} # cache eig per Hamiltonian variant
+        eigL = (wL, VL); eig_ham = {} # cache eig per variant Hamiltonianu
 
         if tgt.get("holo"):
             pocket, _ = data.extract_pocket(os.path.join(clean, tgt["holo"]),
@@ -252,7 +252,7 @@ def main():
     with open(os.path.join(out, "leaderboard_experiments.csv"), "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols); w.writeheader(); w.writerows(rows)
 
-    print("\n=== mean over targets ===")
+    print("\n=== meana over targets ===")
     by = {}
     for r in rows:
         by.setdefault(r["exp"], []).append(r)

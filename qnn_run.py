@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Quantum neural network (VQC) - a learned combinator of quantum features.
+Quantum siec neural (VQC) - learned kombinator features quantum.
 
-LEAVE-ONE-PROTEIN-OUT evaluation (leakage-free): train on 2 proteins,
-predict the 3rd without its labels. Comparison against:
+Evaluation LEAVE-ONE-PROTEIN-OUT (leakage-free): trenuj in 2 proteins,
+przewiduj 3. without jego labels. Comparison z:
   - best single feature (unsupervised),
-  - classical logistic regression on the same features (Quantum vs classical AI).
+  - classical regresja logistyczna in these samych features (Quantum vs classical AI).
 
   python qnn_run.py
 """
@@ -39,7 +39,7 @@ def extract_features(apo, A, gd, gpu=False):
         "centrality": np.array([np.mean(gd[i][np.isfinite(gd[i])]) for i in range(len(A))]),
     }
     X = np.column_stack([f[k] for k in FEATURES]).astype(float)
-    # standardize per protein + squash to [-1,1] (angular encoding)
+    # standaryzacja per protein + squash to [-1,1] (enkodowanie angular)
     X = (X - X.mean(0)) / (X.std(0) + 1e-9)
     return np.tanh(X)
 
@@ -74,21 +74,21 @@ def auc(pred, y):
 
 def run(data_by, GPU=False):
     names = list(data_by)
-    print(f"Leave-one-protein-out ({N_Q} quantum features, {N_Q} qubits, VQC L=2)\n")
+    print(f"Leave-one-protein-out ({N_Q} features quantum, {N_Q} qubits, VQC L=2)\n")
     q_aucs, k_aucs, c_aucs = [], [], []
     for test in names:
         Xtr = np.vstack([data_by[n][0] for n in names if n != test])
         ytr = np.concatenate([data_by[n][1] for n in names if n != test])
         Xte, yte = data_by[test]
-        # 1) VQC (variational) - SPSA
+        # 1) VQC (wariacyjny) - SPSA
         theta = qnn.train_spsa(Xtr, ytr, N_Q, L=2, iters=150, seed=0, use_gpu=GPU)
         pq = qnn.predict(Xte, theta, N_Q, L=2, use_gpu=GPU)
-        # 2) quantum kernel (QSVM) - convex training, no barren plateau
+        # 2) quantum kernel (QSVM) - trening wypukly, without barren plateau
         xp, _ = get_backend(GPU)
         Ptr = qnn.zz_feature_states(Xtr, 2, xp); Pte = qnn.zz_feature_states(Xte, 2, xp)
         Ktr = qnn.quantum_kernel(Ptr, Ptr, xp); Kte = qnn.quantum_kernel(Pte, Ptr, xp)
         pk = qnn.kernel_logistic(Ktr, ytr.astype(float), Kte)
-        # 3) classical logistic regression (baseline)
+        # 3) classical regresja logistyczna (baseline)
         pc = logistic_np(Xtr, ytr, Xte)
         aq_, ak_, ac_ = auc(pq, yte), auc(pk, yte), auc(pc, yte)
         best_feat = max(range(N_Q), key=lambda j: max(auc(Xte[:, j], yte), auc(-Xte[:, j], yte)))
@@ -96,7 +96,7 @@ def run(data_by, GPU=False):
         q_aucs.append(aq_); k_aucs.append(ak_); c_aucs.append(ac_)
         print(f" test={test:22s} VQC={aq_:.3f} QKernel={ak_:.3f} logistic={ac_:.3f} "
               f"best_single={bf:.3f} ({FEATURES[best_feat]})")
-    print(f"\n mean: VQC={np.mean(q_aucs):.3f} QKernel={np.mean(k_aucs):.3f} "
+    print(f"\n meana: VQC={np.mean(q_aucs):.3f} QKernel={np.mean(k_aucs):.3f} "
           f"logistic={np.mean(c_aucs):.3f}")
 
 

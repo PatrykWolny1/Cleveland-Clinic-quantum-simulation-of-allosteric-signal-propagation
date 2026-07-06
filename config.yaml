@@ -1,21 +1,21 @@
 # ============================================================
-# Iteration: I change the values here (run.py) or the grid in experiments.py.
+# Iteracja: zmieniasz wartosci tutaj (run.py) lub siatke w experiments.py.
 # ============================================================
 paths:
   pdb_clean: pdb_clean
-  pdb_raw: pdb_raw          # for auto-detection of the active site (cofactor)
+  pdb_raw: pdb_raw          # do auto-detekcji miejsca aktywnego (kofaktor)
   outputs: outputs
 
 backend:
-  use_gpu: false            # true -> always CuPy (eig on GPU)
-  auto_gpu: false           # GPU is slower for N<~2000 (see bench.py); on for large systems
-  n_gpu_min: 700            # N threshold above which the GPU pays off
-  n_workers: 3              # MP over targets (when there is no GPU)
+  use_gpu: false            # true -> zawsze CuPy (eig na GPU)
+  auto_gpu: false           # GPU wolniejsze przy N<~2000 (patrz bench.py); on dla duzych ukladow
+  n_gpu_min: 700            # prog N, powyzej ktorego oplaca sie GPU
+  n_workers: 3              # MP po targetach (gdy nie ma GPU)
 
 data:
-  chain_select: largest     # all | largest | <chain ID>
-  active_cutoff: 6.0        # A from the cofactor -> active site
-  # cofactor_codes: [GDP, GNP, ADP, ATP]   # null => default list of nucleotides
+  chain_select: largest     # all | largest | <ID lancucha>
+  active_cutoff: 6.0        # A od kofaktora -> miejsce aktywne
+  # cofactor_codes: [GDP, GNP, ADP, ATP]   # null => domyslna lista nukleotydow
 
 graph:
   variant: cutoff           # cutoff | knn
@@ -37,9 +37,9 @@ ranking:
   d_min: 3
   d_max: 8
   normalize: zscore         # active_site: zscore | zabs | distance | none
-  smooth: 0                 # spatial smoothing of the score (0=off)
+  smooth: 0                 # wygladzanie przestrzenne score (0=off)
   beta: 0.5
-  burial: 0                 # >0 => preference for the surface
+  burial: 0                 # >0 => preferencja powierzchni (surface)
   top: 5
 
 scoring:

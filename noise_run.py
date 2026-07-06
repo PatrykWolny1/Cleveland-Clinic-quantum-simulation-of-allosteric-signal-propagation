@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Noise resilience of the winning detector (LST interference) across 3 proteins.
+Noise resilience for zwycieskiego detector (LST interference) in 3 proteins.
   python noise_run.py
 """
 import os, yaml, numpy as np
@@ -33,13 +33,13 @@ def main():
     with ProcessPoolExecutor(max_workers=min(3, len(targets))) as ex:
         res = list(ex.map(_worker, [(t, clean) for t in targets]))
 
-    print("=== DECOHERENCE (p=0 quantum -> p=1 classical limit), LST detector AUC ===")
+    print("=== DEKOHERENCJA (p=0 kwant -> p=1 classical limit), AUC detector LST ===")
     for name, ps, aucs, _ in res:
         print(f" {name:22s} " + " ".join(f"p{p:.2f}={a:.3f}" for p, a in zip(ps, aucs)))
-    print("\n=== STRUCTURAL NOISE (coordinate perturbation), AUC mean+/-std ===")
+    print("\n=== SZUM STRUKTURALNY (perturbation coordinates), AUC mean+/-std ===")
     for name, _, _, cn in res:
         print(f" {name:22s} " + " ".join(f"{s}A={m:.3f}+/-{sd:.3f}" for s, (m, sd) in cn.items()))
-    # save to outputs directory
+    # save to outputs
     out = os.path.join(ROOT, base["paths"]["outputs"]); os.makedirs(out, exist_ok=True)
     import json
     with open(os.path.join(out, "noise_resilience.json"), "w") as f:

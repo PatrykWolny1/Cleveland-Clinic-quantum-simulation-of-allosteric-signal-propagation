@@ -1,6 +1,6 @@
-# Minimal challenge set. apo = input, holo = ground-truth.
-# ligand: null => auto-detection of the largest hetero-fragment (the drug).
-# domain_range/active_site: optional (slots for Phase II).
+# Zbior minimalny challenge'u. apo = wejscie, holo = ground-truth.
+# ligand: null => auto-detekcja najwiekszego hetero-fragmentu (leku).
+# domain_range/active_site: opcjonalne (gniazda na Faze II).
 targets:
   - name: 4OBE_KRAS_G12C
     apo: 4OBE_KRAS_G12C_apo.pdb
@@ -23,7 +23,7 @@ targets:
     domain_range: null
     active_site: null
 
-  # additional target - no holo => hit-list only, without scoring
+  # cel dodatkowy - brak holo => tylko hit-list, bez scoringu
   - name: 1NKP_cMyc_Max
     apo: 1NKP_cMyc_Max_apo.pdb
     holo: null

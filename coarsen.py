@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Coarse-graining: proof of topological-signal retention + speedup.
+Coarse-graining: proof retention sygnalu topologicznego + speedup.
 
-For each target computes the detector AUC at FULL resolution and after
-reduction to M super-nodes (at various reduction levels). Reports:
+For each targetu computes AUC detector w PELNEJ rozdzielczosci and over
+redukcji to M super-nodes (different degreese). Raportuje:
   AUC_full, AUC_coarse, retention = AUC_coarse/AUC_full,
-  spectral_err (relative error of the low L modes), eig speedup (N^3/M^3).
+  spectral_err (relatywny error niskich modes L), speedup eig (N^3/M^3).
 
   python coarsen.py
 """
@@ -43,7 +43,7 @@ def run_target(tgt, base, ratios=(2, 3, 5)):
         lab, Ac, sizes = coarse.spectral_coarsen(A, M)
         Mc = Ac.shape[0]
         gdc = graph.graph_distance(Ac)
-        # super-node labels: a cluster is positive if it contains a pocket residue
+        # labels super-nodes: cluster pozytywny if zawiera residue pocket
         clab = np.zeros(Mc, int)
         for i, l in enumerate(lab):
             if labels[i]:
@@ -51,7 +51,7 @@ def run_target(tgt, base, ratios=(2, 3, 5)):
         t = time.time()
         auc_c, sc_c = detector_auc(Ac, gdc, clab, d_min=1, d_max=None)
         t_c = time.time() - t
-        # project down to residues and AUC at the residue level
+        # rzut in residues i AUC in poziomie reszt
         sc_res = coarse.project_up(sc_c, lab)
         from aq.rank import _finalize
         o_res, _ = _finalize(sc_res, None)
@@ -66,7 +66,7 @@ def main():
     base = yaml.safe_load(open(os.path.join(ROOT, "config.yaml")))
     targets = [t for t in yaml.safe_load(open(os.path.join(ROOT, "targets.yaml")))["targets"]
                if t.get("holo")]
-    print("Coarse-graining: signal retention + speedup")
+    print("Coarse-graining: retention sygnalu + speedup")
     for t in targets:
         run_target(t, base)
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Operator transfer: 3 pairs -> law -> 4th case.
-  - operator per protein + their agreement (is it a single law),
-  - leave-one-protein-out: operator from 2 proteins applied to the 3rd,
-  - law (sigma-T filter) and c-Myc prediction.
+Operator transfer: 3 pary -> prawo -> 4. case.
+  - operator per protein + ich agreement (whether one prawo),
+  - leave-one-protein-out: operator z 2 proteins in 3.,
+  - prawo (filtr sigma-T) i prediction c-Myc.
   python operator_run.py
 """
 import os, yaml, numpy as np
@@ -43,15 +43,15 @@ def main():
     chan = res[0][5]
     names = [t["name"] for t in train]
 
-    # per-protein operators + agreement
+    # operatory per protein + agreement
     Ws = [operator.fit_operator(D[n][0], D[n][1].astype(float), ridge=2.0) for n in names]
     Agr = operator.operator_agreement(Ws)
-    print("Operator agreement (cosine similarity, 1=identical law):")
+    print("Agreement operatorow (cos-podobienstwo, 1=identyczne prawo):")
     for i, n in enumerate(names):
         print(" " + n[:20].ljust(20) + " " + " ".join(f"{Agr[i,j]:+.2f}" for j in range(len(names))))
 
-    # leave-one-protein-out: operator from 2 -> tested on the 3rd
-    print("\nLeave-one-protein-out (operator from 2 pairs applied to the 3rd):")
+    # leave-one-protein-out: operator z 2 -> test in 3.
+    print("\nLeave-one-protein-out (operator z 2 par in 3.):")
     aucs = []
     for these in names:
         Str = np.vstack([D[n][0] for n in names if n != these])
@@ -60,26 +60,26 @@ def main():
         p = operator.apply_operator(D[these][0], W)
         a = auc(p, D[these][1]); aucs.append(a)
         print(f" test={these:22s} AUC={a:.3f}")
-    print(f" mean={np.mean(aucs):.3f}")
+    print(f" meana={np.mean(aucs):.3f}")
 
-    # DIAGNOSTICS: axis separating the most inconsistent pair
+    # DIAGNOSTYKA: os dzielaca most anty-consistent pare
     n = len(names)
     ij = min([(i, j) for i in range(n) for j in range(i + 1, n)], key=lambda p: Agr[p])
-    print(f"\nMost divergent pair: {names[ij[0]]} vs {names[ij[1]]} (cos={Agr[ij]:+.2f})")
+    print(f"\nNajbardziej rozbiezna para: {names[ij[0]]} vs {names[ij[1]]} (cos={Agr[ij]:+.2f})")
     diff = np.abs(Ws[ij[0]] / (np.linalg.norm(Ws[ij[0]]) + 1e-9)
                   - Ws[ij[1]] / (np.linalg.norm(Ws[ij[1]]) + 1e-9))
     top = np.argsort(-diff)[:5]
-    print(" most discriminating channels: " + ", ".join(f"{chan[k]}({diff[k]:.2f})" for k in top))
+    print(" channels najsilniej rozdzielajace: " + ", ".join(f"{chan[k]}({diff[k]:.2f})" for k in top))
 
-    # LAW: shared operator from 3 pairs + top channels
+    # PRAWO: shared operator z 3 par + top channels
     Wall = operator.fit_operator(np.vstack([D[n][0] for n in names]),
                                  np.concatenate([D[n][1] for n in names]).astype(float), ridge=2.0)
-    print("\nLAW (shared operator, top-8 channels by |weights|):")
+    print("\nPRAWO (shared operator, top-8 channels |weights|):")
     top = np.argsort(-np.abs(Wall))[:8]
     for k in top:
         print(f" {chan[k]:16s} W={Wall[k]:+.3f}")
 
-    # c-Myc prediction using the shared operator
+    # prediction c-Myc wspolnym operatorem
     for t in test:
         S, _, keys, resn = D[t["name"]]
         p = operator.apply_operator(S, Wall); order = np.argsort(-p)

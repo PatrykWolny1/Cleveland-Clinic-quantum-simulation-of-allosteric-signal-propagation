@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Feature curation (remove ballast) + marginal contribution of PHASE: GB amplitude vs +phase.
-Determines how much the phase channels add (especially KRAS). Leave-one-out.
+Curation features (remove ballast) + marginalny wklad FAZY: GB amplitude vs +phase.
+Rozstrzyga, ile phase channels dokladaja (zwlaszcza KRAS). Leave-one-out.
   python curated_run.py
 """
 import os, yaml, numpy as np
@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor
 from aq import data, spaces, mlaw, score
 
 ROOT = os.path.dirname(os.path.abspath(__file__)); GPU = False
-BALAST = {"coherent", "communic", "interf_T40"} # transfer < random (audit)
+BALAST = {"coherent", "communic", "interf_T40"} # transfer < losowy (audyt)
 PHASE = {"interf_T10", "interf_T20", "quadrature", "phase_coh", "gauge_coh", "gauge_interf"}
 
 
@@ -48,10 +48,10 @@ def main():
     tr = [t["name"] for t in train]
 
     keep = [i for i, n in enumerate(names) if n not in BALAST] # curation
-    amp = [i for i in keep if names[i] not in PHASE] # amplitude/spectrum only
-    curated = keep # amplitude + phase (without ballast)
+    amp = [i for i in keep if names[i] not in PHASE] # only amplitude/spectrum
+    curated = keep # amplitude + phase (without ballastu)
 
-    print("GB leave-one-protein-out (marginal contribution of PHASE)\n")
+    print("GB leave-one-protein-out (marginalny wklad FAZY)\n")
     a_amp = _loo(D, tr, amp)
     a_cur = _loo(D, tr, curated)
     print(f" {'protein':22s} amplitude +phase delta")
@@ -59,9 +59,9 @@ def main():
         d = a_cur[these] - a_amp[these]
         print(f" {these:22s} {a_amp[these]:.3f} {a_cur[these]:.3f} {d:+.3f}")
     has, mc = np.mean(list(a_amp.values())), np.mean(list(a_cur.values()))
-    print(f" {'MEAN':22s} {has:.3f} {mc:.3f} {mc-has:+.3f}")
-    print(f"\n ({len(amp)} amplitude/spectrum channels, +{len(curated)-len(amp)} phase; "
-          f"removed ballast: {', '.join(sorted(BALAST))})")
+    print(f" {'SREDNIA':22s} {has:.3f} {mc:.3f} {mc-has:+.3f}")
+    print(f"\n ({len(amp)} channels amplitude/spectrum, +{len(curated)-len(amp)} phase; "
+          f"removeieto ballast: {', '.join(sorted(BALAST))})")
 
     # final GB (curated) -> c-Myc
     Xall = np.vstack([D[n][0][:, curated] for n in tr]); yall = np.concatenate([D[n][1] for n in tr]).astype(float)

@@ -16,7 +16,7 @@ def mannwhitney(scores, labels):
 
 
 def bootstrap_auc_ci(scores, labels, n_boot=2000, seed=0, alpha=0.05):
-    """95% CI for AUC via bootstrap over residues (stratified)."""
+    """95% CI for AUC via bootstrap over residues (stratyfikowany)."""
     rng = np.random.default_rng(seed)
     pos = np.where(labels == 1)[0]; neg = np.where(labels == 0)[0]
     if len(pos) == 0 or len(neg) == 0:

@@ -1,21 +1,21 @@
 """
-QBoost - quantum tree boosting (Neven et al.). "A tree like LGBM, but quantum".
+QBoost - quantum boosting drzew (Neven i in.). "Drzewo as LGBM, but quantum".
 
-Weak classifiers = decision stumps (nodes: threshold on a feature, +-sign).
-Instead of greedy addition (LGBM) - ensemble selection posed as a QUBO:
+Slabe klasyfikatory = stumps decisive (nodes: threshold in cesze, +-sign).
+Instead of zachlannego dokladania (LGBM) - selection ensemble as QUBO:
   min_w sum_n ( (1/K) sum_i w_i h_i(x_n) - y_n )^2 + lambda sum_i w_i
-  w_i in {0,1} -> QUBO -> QPU (D-Wave anneal / QAOA on gate-based hardware).
-I feed in ALL channels (amplitude + phase).
+  w_i in {0,1} -> QUBO -> QPU (D-Wave anneal / QAOA in gatech).
+Karmimy WSZYSTKIMI channelami (amplitude + phase).
 
-Optimization: stump/QUBO construction vectorized (numpy); the QUBO solve is the
-quantum part (QPU). CPU simulation via simulated annealing for training.
+Optimization: construction stumps/QUBO vectorized (numpy); QUBO solve = part
+quantum (QPU). Simulation anneal in CPU (simulated annealing) to treningu.
 """
 from __future__ import annotations
 import numpy as np
 
 
 def build_stumps(X, q=(0.35, 0.5, 0.65)):
-    """Stump pool: for each feature, thresholds at quantiles x 2 signs."""
+    """Pool stumps: for eachj features thresholds in kwantylach x 2 signi."""
     stumps = []
     for j in range(X.shape[1]):
         for tq in q:
@@ -25,7 +25,7 @@ def build_stumps(X, q=(0.35, 0.5, 0.65)):
 
 
 def stump_matrix(X, stumps):
-    """H [N x K] in {-1,+1}: h = s * sign(x_j - t)."""
+    """H [N x K] w {-1,+1}: h = s * sign(x_j - t)."""
     H = np.empty((X.shape[0], len(stumps)))
     for k, (j, t, s) in enumerate(stumps):
         H[:, k] = s * np.where(X[:, j] - t >= 0, 1.0, -1.0)
@@ -33,7 +33,7 @@ def stump_matrix(X, stumps):
 
 
 def build_qubo(H, y, lam=0.04):
-    """Q [K x K]: QBoost. y in {-1,+1}. (w_i^2=w_i -> on the diagonal.)"""
+    """Q [K x K]: QBoost. y w {-1,+1}. (w_i^2=w_i -> in diagonali.)"""
     N, K = H.shape
     HtH = H.T @ H; Hty = H.T @ y
     Q = (2.0 / K**2) * HtH # off-diag = 2*(H^tH)/K^2
@@ -71,7 +71,7 @@ if _HAVE_NUMBA:
 
 
 def solve_sa(Q, steps=4000, restarts=8, seed=0):
-    """Simulated annealing QUBO (delta O(K), Numba). On a QPU -> D-Wave/QAOA."""
+    """Simulated annealing QUBO (delta O(K), Numba). In QPU -> D-Wave/QAOA."""
     rng = np.random.default_rng(seed); K = Q.shape[0]
     ri = rng.integers(0, K, (restarts, steps))
     ru = rng.random((restarts, steps))

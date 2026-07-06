@@ -1,4 +1,4 @@
-"""Test Phase II on SYN: new variants + distal fix."""
+"""Test Phase II in SYN: new variants + poprawka distal."""
 import os, numpy as np
 from aq import data, graph, propagate, rank, score
 CLEAN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pdb_clean")
@@ -20,13 +20,13 @@ def pipe(chain="all", gvar="cutoff", gp=None, hvar="laplacian",
     intop5 = [int(i) for i in order[:5] if 32<=i<=45]
     return ev, intop5
 
-print("graph distance (csgraph) - sanity:")
+print("czas graph (csgraph) - sanity:")
 apo = data.load_apo(os.path.join(CLEAN,"SYN_apo.pdb"),"SYN")
 A = graph.build_graph(apo.coords,"cutoff",cutoff=8.0)
 D = graph.graph_distance(A)
 print(f" D shape={D.shape} finite%={100*np.isfinite(D).mean():.0f} max={np.nanmax(D[np.isfinite(D)]):.0f}")
 
-print("\nvariants (SYN, pocket=32..45):")
+print("\nwarianty (SYN, pocket=32..45):")
 for tag,kw in [
     ("baseline time_avg/laplacian/fluct", {}),
     ("knn tau k=10", {"gvar":"knn","gp":{"k":10}}),

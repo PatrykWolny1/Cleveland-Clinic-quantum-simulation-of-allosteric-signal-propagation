@@ -1,11 +1,11 @@
 """
-Plateau mechanism (n-bubble equilibria, Slow 2025) as a geometric descriptor.
+Mechanism Plateau (n-bubble equilibria, Slow 2025) as descriptor geometric.
 
-At Plateau equilibrium the vectors from a residue to its neighbors satisfy cos(phi_n)=-1/(n-1).
-A residue in a packed core -> small deviation; a residue lining a void
-pocket -> neighbors are one-sided -> large angular deviation from equilibrium.
-Score = mean of (cos_angle - (-1/(n-1)))^2 over pairs of neighbors.
-Numba (CPU multiprocessing). Purely structural (from apo), complementary to spectral metrics.
+W rownowadze Plateau wektory from residues to neighbors meetsja cos(phi_n)=-1/(n-1).
+Residue w packedm rdzeniu -> small deviation; residue wyscielajaca void
+pocket -> neighbors jednostronnie -> DUZE deviation angular from rownoweights.
+Score = mean (cos_kata - (-1/(n-1)))^2 over parach neighbors.
+Numba (CPU MP). Purely structural (z apo), komplementarny to metryk spectralch.
 """
 from __future__ import annotations
 import numpy as np
@@ -49,7 +49,7 @@ def _plateau(coords, indptr, indices):
 
 
 def plateau_score(coords, A):
-    """Geometric deviation of neighbors from Plateau equilibrium, per residue."""
+    """Deviation geometry neighbors from Plateau equilibrium, per residue."""
     Acsr = (A > 0)
     indptr = np.zeros(len(coords)+1, dtype=np.int64)
     idx = []

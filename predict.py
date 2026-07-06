@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Final prediction (deliverable #2). Saves three top-5 variants per target:
+Final prediction (deliverable #2). Saves Three variants top-5 per target:
 
-  *_hitlist_precision.json : Q_communic_band - best hit@5 (3/3 in validation)
-                             -> main list of allosteric sites
-  *_hitlist_adaptive.json : leakage-free rule (cofactor->A_active_zabs,
-                             otherwise Q_coherent_band) - separation detector (AUC)
-  *_hitlist_consensus.json : best-of complementary detectors
+  *_hitlist_precision.json : Q_communic_band - best hit@5 (3/3 in walidacji)
+                             -> main lista miejsc allosterycznych
+  *_hitlist_adaptive.json : regula leakage-free (cofactor->A_active_zabs,
+                             inaczej Q_coherent_band) - detector separacji (AUC)
+  *_hitlist_consensus.json : best-of komplementarnych detectors
 
-Everything from the same pipeline as experiments.py (eig cache).
+Everything z this samej sciezki co experiments.py (cache eigow).
   python predict.py
 """
 import os, json, csv, yaml
@@ -35,21 +35,21 @@ def main():
         _, apo, cons, orders, has_active = process_target(t, base, EXPERIMENTS)
         K = apo.keys, apo.resnames
 
-        # 1) precision (main deliverable)
+        # 1) precyzja (main deliverable)
         o, s = orders["Q_communic_band"]
         prec = rank.hit_list(o, *K, s, top=5)
         _save(out, t["name"], prec, "precision")
 
-        # 2) adaptive separation detector (AUC):
-        # cofactor -> the better of {A_active_zabs, A_gnm_zabs} by decisiveness
+        # 2) adaptacyjny detector separacji (AUC):
+        # cofactor -> better z {A_active_zabs, A_gnm_zabs} by decisiveness
         # (peakedness score, unsupervised, leakage-free);
-        # otherwise -> Q_adjacency_band (separation leader in ABL/myosin)
+        # inaczej -> Q_adjacency_band (lider separacji in ABL/myosin)
         import numpy as _np
         def _peak(o_s):
             v = _np.asarray(o_s[1], float); v = v[_np.isfinite(v)]
             if v.std() < 1e-12: return 0.0
             z = (v - v.mean()) / v.std(); return float((z ** 4).mean()) # kurtosis = decisiveness
-        # candidate pool: LST (ABL/myosin) + active-site (KRAS) if detected
+        # pula candidates: LST (ABL/myosin) + active-site (KRAS) if detected
         pool = ["LST_logf_interf", "LST_logf_coherent"]
         if has_active:
             pool += [k for k in ("A_active_zabs", "A_gnm_zabs") if k in orders]

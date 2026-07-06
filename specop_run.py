@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Spectral operator from the data matrix (not from features): 3 pairs -> law g(lambda) -> the 4th.
+Operator spectral z Matrix Data (not z cech): 3 pary -> prawo g(lambda) -> 4.
   python specop_run.py
 """
 import os, yaml, numpy as np
@@ -37,11 +37,11 @@ def main():
 
     Ws = [specop.fit_operator(D[n][0], D[n][1].astype(float), ridge=1.0) for n in names]
     Agr = specop.agreement(Ws)
-    print("Agreement of spectral operators (1=identical law):")
+    print("Agreement operatorow spectralch (1=identyczne prawo):")
     for i, n in enumerate(names):
         print(" " + n[:20].ljust(20) + " " + " ".join(f"{Agr[i,j]:+.2f}" for j in range(len(names))))
 
-    print("\nLeave-one-protein-out (operator from 2 pairs -> the 3rd):")
+    print("\nLeave-one-protein-out (operator z 2 par -> 3.):")
     aucs = []
     for these in names:
         Ptr = np.vstack([D[n][0] for n in names if n != these])
@@ -49,11 +49,11 @@ def main():
         W = specop.fit_operator(Ptr, ytr, ridge=1.0)
         a = auc(specop.apply_operator(D[these][0], W), D[these][1]); aucs.append(a)
         print(f" test={these:22s} AUC={a:.3f}")
-    print(f" mean={np.mean(aucs):.3f}")
+    print(f" meana={np.mean(aucs):.3f}")
 
     Wall = specop.fit_operator(np.vstack([D[n][0] for n in names]),
                                np.concatenate([D[n][1] for n in names]).astype(float), ridge=1.0)
-    print("\nLAW g(lambda) (weight per spectral band, band 0 = lowest frequencies / global modes):")
+    print("\nPRAWO g(lambda) (weight per band spectrum, band 0 = najnizsze czest./modes globalne):")
     for b in range(len(Wall)):
         bar = "#" * int(abs(Wall[b]) / (np.abs(Wall).max() + 1e-9) * 20)
         print(f" band {b:2d}: {Wall[b]:+.3f} {bar}")

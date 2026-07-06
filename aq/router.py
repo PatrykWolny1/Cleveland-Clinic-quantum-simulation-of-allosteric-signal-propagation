@@ -18,11 +18,11 @@ def decisiveness(score):
     if len(s) < 4 or s.std() < 1e-12:
         return 0.0
     z = (s - s.mean()) / s.std()
-    return float((z ** 4).mean()) # kurtosis (peak sharpness)
+    return float((z ** 4).mean()) # kurtosis (ostrosc peak)
 
 
 def route(candidates):
-    """candidates: dict name->score. Returns (name, score, regime)."""
+    """candidates: dict nazwa->score. Returns (nazwa, score, regime)."""
     name = max(candidates, key=lambda k: decisiveness(candidates[k]))
     regime = "proximal" if name.startswith("gnm") or "active" in name else "distal"
     return name, candidates[name], regime
